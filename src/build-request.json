@@ -1,0 +1,119 @@
+{
+  "kind": "build_request",
+  "title": "Whatchat: WhatsApp-style messaging app with email-based accounts and clear project access for user edits",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Create the Whatchat app shell with core navigation: an authentication flow, a chat list view, a chat detail (thread) view, and a basic settings/profile view.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2",
+          "msg-9"
+        ],
+        "quotes": [
+          "Create a same WhatsApp app function app but login without phone number and with email and the app name is \"Whatchat\"",
+          "I mean I need my app access to i add changes to my app"
+        ]
+      },
+      "acceptanceCriteria": [
+        "App name is shown as “Whatchat” in the UI header and/or landing screen.",
+        "Users can navigate between Auth, Chat List, Chat Thread, and Settings screens using a consistent layout.",
+        "All user-facing text is in English."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Implement an email-based account system (no phone number) that allows users to sign up, sign in, sign out, and persist their session across reloads. If true email verification is not possible, treat the email as an identifier (with clear UX copy indicating no verification).",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "login without phone number and with email"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Sign up requires at minimum: email + password (or equivalent credential) and prevents duplicate email registrations.",
+        "Sign in validates credentials and starts a session that remains valid after a page refresh.",
+        "Sign out clears the local session and blocks access to chats until sign-in.",
+        "UI clearly indicates whether the email is verified or unverified (if verification is not implemented)."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Implement WhatsApp-style messaging (non-real-time): users can create/select 1:1 conversations, send text messages, and manually refresh to retrieve new messages.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-2",
+          "msg-3"
+        ],
+        "quotes": [
+          "Create a same WhatsApp app function app",
+          "real-time chat (like WhatsApp) is not supported on this platform because real-time technologies such as WebSockets are not allowed."
+        ]
+      },
+      "acceptanceCriteria": [
+        "A user can start a conversation with another user by selecting/adding them via their email identifier.",
+        "Users can send text messages in a thread and see them appended in chronological order.",
+        "There is an explicit Refresh action that fetches new messages and updates the thread.",
+        "The UI indicates that messages are not real-time (e.g., “Pull/Click to refresh”)."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Provide “app access” for making changes by adding clear developer-facing documentation and in-app pointers explaining how to modify the frontend/backend and redeploy to the Internet Computer using the project’s standard workflow.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-9"
+        ],
+        "quotes": [
+          "I mean I need my app access to i add changes to my app"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A top-level README (or equivalent documentation page) exists describing: how to run locally, how to build, and how to deploy.",
+        "Documentation includes where to change key UI text/styles and where core backend logic (auth/messages) lives.",
+        "The app includes an “About / Developer Info” section (e.g., in Settings) that links to or summarizes where to edit code and how to redeploy (no external services required)."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Apply a cohesive, distinct visual theme for Whatchat (colors, typography, spacing, and component styling) and enforce it consistently across Auth, Chat List, Thread, and Settings screens (avoid default template styling).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "the app name is \"Whatchat\""
+        ]
+      },
+      "acceptanceCriteria": [
+        "Theme is consistent across all screens (same primary/secondary colors, typography scale, spacing).",
+        "Theme does not use a blue/purple-dominant palette unless explicitly requested later.",
+        "UI is mobile-first and resembles a modern messenger layout (chat list + thread patterns)."
+      ]
+    }
+  ],
+  "constraints": [
+    "Backend must remain a single Motoko actor in backend/main.mo (no multi-service architecture).",
+    "Do not use WebSockets or any real-time transport; messaging must work via manual refresh/poll-style fetch.",
+    "Do not modify files under frontend immutable paths (frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui); compose them instead.",
+    "Use English for any user-facing text."
+  ],
+  "nonGoals": [
+    "True WhatsApp-level real-time typing indicators, online presence, or instantaneous message delivery.",
+    "Third-party authentication providers (Google/Facebook/GitHub/Auth0) or external email/SMS verification services.",
+    "Push notifications, SMS, or email sending integrations.",
+    "End-to-end encryption guarantees."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}

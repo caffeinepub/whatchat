@@ -1,0 +1,209 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Whatchat frontend shell, email-identifier auth UX, non-real-time chat UI, developer info, and cohesive theme",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Create the Whatchat app shell with core navigation across Auth, Chat List, Chat Thread, and Settings screens.",
+      "acceptanceCriteria": [
+        "App name is shown as “Whatchat” in the UI header and/or landing screen.",
+        "Users can navigate between Auth, Chat List, Chat Thread, and Settings screens using a consistent layout.",
+        "All user-facing text is in English."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "create",
+          "description": "Create the main Whatchat app shell (header + main content) with client-side routing for Auth, Chat List, Chat Thread, and Settings views; show “Whatchat” branding in the header. Use shadcn-ui layout primitives (e.g., Button, Card, Tabs/Navigation) to keep navigation consistent. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "create",
+          "description": "Add the CSS entry imported by frontend/src/main.tsx. Keep it minimal and delegate to the existing theme tokens (e.g., import/compose from frontend/index.css) so global styling is applied consistently without modifying immutable files."
+        },
+        {
+          "path": "frontend/src/components/WhatchatLayout.tsx",
+          "operation": "create",
+          "description": "Create a reusable layout component that renders the app header (Whatchat title), a mobile-first navigation bar, and an outlet area for screens. Use shadcn-ui components for consistent styling. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/screens/AuthScreen.tsx",
+          "operation": "create",
+          "description": "Create an Auth screen UI (sign up/sign in) entry point that is reachable via routing and uses English UX copy."
+        },
+        {
+          "path": "frontend/src/screens/ChatListScreen.tsx",
+          "operation": "create",
+          "description": "Create a chat list screen that displays existing conversations and navigates to a selected thread. Use shadcn-ui list/menu components as appropriate. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/screens/ChatThreadScreen.tsx",
+          "operation": "create",
+          "description": "Create a chat thread screen that shows messages, supports composing/sending, and includes a manual Refresh action. Use shadcn-ui input/button components. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/screens/SettingsScreen.tsx",
+          "operation": "create",
+          "description": "Create a basic settings/profile screen that includes profile fields and an About / Developer Info section entry (content detailed in REQ-4)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Implement an email-based account UX (no phone number) with sign up/in/out and session persistence; clearly indicate lack of email verification.",
+      "acceptanceCriteria": [
+        "Sign up requires at minimum: email + password (or equivalent credential) and prevents duplicate email registrations.",
+        "Sign in validates credentials and starts a session that remains valid after a page refresh.",
+        "Sign out clears the local session and blocks access to chats until sign-in.",
+        "UI clearly indicates whether the email is verified or unverified (if verification is not implemented)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/state/authStore.ts",
+          "operation": "create",
+          "description": "Implement a frontend-only auth/session store using localStorage for persistence across reloads. Store: currentSession (email identifier), a local credential record for demo purposes, and an explicit emailVerified=false flag with copy indicating no verification is performed."
+        },
+        {
+          "path": "frontend/src/hooks/useWhatchatAuth.ts",
+          "operation": "create",
+          "description": "Create a hook that exposes signUp/signIn/signOut, session state, and guards to block chat screens when signed out. Ensure the hook clears cached app data on sign out (e.g., react-query cache) in a way that composes with existing authentication hooks and does not modify immutable files."
+        },
+        {
+          "path": "frontend/src/screens/AuthScreen.tsx",
+          "operation": "modify",
+          "description": "Wire the sign up/sign in/sign out UI to the frontend auth store/hook. Include clear English copy that email is used as an identifier and is unverified (no email sending/verification). Use shadcn-ui Form/Input/Button components for consistent UX. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/RequireWhatchatSession.tsx",
+          "operation": "create",
+          "description": "Create a route guard wrapper that redirects to Auth when no session exists, and shows a simple access-blocked state for chat screens until sign-in completes (English-only)."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Apply the auth guard to Chat List, Thread, and Settings routes so signed-out users cannot access chats until they sign in."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Implement WhatsApp-style (non-real-time) 1:1 messaging UI: create/select conversations, send text messages, and manually refresh to retrieve new messages.",
+      "acceptanceCriteria": [
+        "A user can start a conversation with another user by selecting/adding them via their email identifier.",
+        "Users can send text messages in a thread and see them appended in chronological order.",
+        "There is an explicit Refresh action that fetches new messages and updates the thread.",
+        "The UI indicates that messages are not real-time (e.g., “Pull/Click to refresh”)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/services/messagingService.ts",
+          "operation": "create",
+          "description": "Add a frontend messaging service layer that uses the existing actor (via useActor composition) to load conversation IDs, load messages for a conversation, send messages, and mark as read. Keep the service focused on frontend wiring and error handling; do not modify immutable hooks."
+        },
+        {
+          "path": "frontend/src/state/addressBookStore.ts",
+          "operation": "create",
+          "description": "Create a lightweight frontend-only address book mapping (email -> recipient identifier required by the actor) stored in localStorage to support starting chats by email identifier in the UI (non-verified, user-managed mapping)."
+        },
+        {
+          "path": "frontend/src/screens/ChatListScreen.tsx",
+          "operation": "modify",
+          "description": "Implement conversation list rendering and an “Start new chat” affordance that prompts for recipient email and uses the address book mapping to create/select a 1:1 thread. Use shadcn-ui Dialog/Sheet + Input + Button for the add/select flow. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/screens/ChatThreadScreen.tsx",
+          "operation": "modify",
+          "description": "Render messages chronologically, add a compose box to send text, and include an explicit Refresh button that re-fetches messages. Show a visible banner/copy indicating messages are not real-time (e.g., “Not real-time — tap Refresh to check for new messages.”). Use shadcn-ui components for message list container, buttons, and inputs. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/UnreadBadge.tsx",
+          "operation": "create",
+          "description": "Add a small unread-count badge component to display unread counts in the chat list header/items. Use shadcn-ui Badge (or equivalent) for consistent styling. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/screens/ChatListScreen.tsx",
+          "operation": "modify",
+          "description": "Wire unread count fetching and display using the UnreadBadge component; ensure counts update after Refresh and after opening a thread (mark as read)."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Ensure navigation from Chat List -> Chat Thread includes the selected conversation identifier in the route and that returning back preserves the chat list state on mobile."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Provide developer-facing documentation and in-app pointers explaining how to modify the app and redeploy using the project workflow.",
+      "acceptanceCriteria": [
+        "A top-level README (or equivalent documentation page) exists describing: how to run locally, how to build, and how to deploy.",
+        "Documentation includes where to change key UI text/styles and where core backend logic (auth/messages) lives.",
+        "The app includes an “About / Developer Info” section (e.g., in Settings) that links to or summarizes where to edit code and how to redeploy (no external services required)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/README.md",
+          "operation": "create",
+          "description": "Create developer documentation for the project workflow (run locally, build, deploy) and clearly point to where to edit key frontend UI (screens, theme files) and where backend logic lives (by referencing backend/main.mo conceptually, without implementing backend changes here)."
+        },
+        {
+          "path": "frontend/src/components/DeveloperInfoCard.tsx",
+          "operation": "create",
+          "description": "Create an in-app Developer Info component summarizing where to edit UI, where messages/auth integration lives on the frontend, and how to redeploy using the standard workflow. Use shadcn-ui Card/Typography components. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/screens/SettingsScreen.tsx",
+          "operation": "modify",
+          "description": "Add an “About / Developer Info” section that renders DeveloperInfoCard and (optionally) displays the developer documentation URL fetched from the backend capability when available (fallback to local README guidance). Ensure all copy is in English."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Apply a cohesive, distinct Whatchat visual theme (not blue/purple-dominant) consistently across all screens with a mobile-first messenger layout.",
+      "acceptanceCriteria": [
+        "Theme is consistent across all screens (same primary/secondary colors, typography scale, spacing).",
+        "Theme does not use a blue/purple-dominant palette unless explicitly requested later.",
+        "UI is mobile-first and resembles a modern messenger layout (chat list + thread patterns)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/index.css",
+          "operation": "modify",
+          "description": "Adjust global design tokens (CSS variables) to a distinct Whatchat theme (e.g., green/teal-forward instead of blue/purple), and ensure base typography/spacing feels messenger-like. Keep changes consistent with Tailwind + shadcn-ui token usage."
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Extend/adjust theme configuration as needed to support the Whatchat palette and mobile-first spacing scale while continuing to use the existing token-based color system."
+        },
+        {
+          "path": "frontend/src/components/WhatchatLayout.tsx",
+          "operation": "modify",
+          "description": "Apply consistent header/nav styling (spacing, typography, colors) to match the Whatchat theme and to support a mobile-first messenger layout. Use shadcn-ui components for consistent styling. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/screens/AuthScreen.tsx",
+          "operation": "modify",
+          "description": "Update Auth screen layout and component styling to match the Whatchat theme (avoid default template look). Use shadcn-ui components and consistent spacing/typography. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/screens/ChatListScreen.tsx",
+          "operation": "modify",
+          "description": "Style the chat list with messenger-like density, avatars/placeholders, and readable typography consistent with the theme. Use shadcn-ui components where applicable. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/screens/ChatThreadScreen.tsx",
+          "operation": "modify",
+          "description": "Style the thread view with message bubble patterns, clear timestamps/read states (as available), and a fixed composer area suitable for mobile. Use shadcn-ui components where applicable. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/screens/SettingsScreen.tsx",
+          "operation": "modify",
+          "description": "Style settings/profile sections (cards, dividers, inputs) consistently with the Whatchat theme and overall component styling. Use shadcn-ui components. Verify the component's usage instructions before implementing."
+        }
+      ]
+    }
+  ]
+}

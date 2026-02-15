@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Build \"Whatchat\", a WhatsApp-like messaging app with email-based login (no phone number) and user access to the app/codebase so they can make changes.",
+  "architectural_notes": [],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-create-the-whatchat-app-shell-with-core-navigation-an-authentication-flow-a-chat-list-view-a-chat-detail-thread-view-and-a-basic-settings-profile-view",
+      "title": "Create the Whatchat app shell with core navigation: an authentication flow, a chat list view, a chat detail (thread) view, and a basic settings/profile view.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-an-email-based-account-system-no-phone-number-that-allows-users-to-sign-up-sign-in-sign-out-and-persist-their-session-across-reloads-if-true-email-verification-is-not-possible-treat-the-email-as-an-identifier-with-clear-ux-copy-indicating-no-verification",
+      "title": "Implement an email-based account system (no phone number) that allows users to sign up, sign in, sign out, and persist their session across reloads. If true email verification is not possible, treat the email as an identifier (with clear UX copy indicating no verification).",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-whatsapp-style-messaging-non-real-time-users-can-create-select-1-1-conversations-send-text-messages-and-manually-refresh-to-retrieve-new-messages",
+      "title": "Implement WhatsApp-style messaging (non-real-time): users can create/select 1:1 conversations, send text messages, and manually refresh to retrieve new messages.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-provide-app-access-for-making-changes-by-adding-clear-developer-facing-documentation-and-in-app-pointers-explaining-how-to-modify-the-frontend-backend-and-redeploy-to-the-internet-computer-using-the-project-s-standard-workflow",
+      "title": "Provide “app access” for making changes by adding clear developer-facing documentation and in-app pointers explaining how to modify the frontend/backend and redeploy to the Internet Computer using the project’s standard workflow.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-a-cohesive-distinct-visual-theme-for-whatchat-colors-typography-spacing-and-component-styling-and-enforce-it-consistently-across-auth-chat-list-thread-and-settings-screens-avoid-default-template-styling",
+      "title": "Apply a cohesive, distinct visual theme for Whatchat (colors, typography, spacing, and component styling) and enforce it consistently across Auth, Chat List, Thread, and Settings screens (avoid default template styling).",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Create Whatchat: WhatsApp-like messaging app",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Support login without phone number using email-based authentication",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Provide user access to the app project (codebase/editor/build instructions) so they can modify and add changes",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "Whatchat",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

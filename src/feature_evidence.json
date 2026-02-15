@@ -1,0 +1,117 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-create-the-whatchat-app-shell-with-core-navigation-an-authentication-flow-a-chat-list-view-a-chat-detail-thread-view-and-a-basic-settings-profile-view",
+      "featureTitle": "Create the Whatchat app shell with core navigation: an authentication flow, a chat list view, a chat detail (thread) view, and a basic settings/profile view.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/WhatchatLayout.tsx",
+        "frontend/src/index.css",
+        "frontend/src/screens/AuthScreen.tsx",
+        "frontend/src/screens/ChatListScreen.tsx",
+        "frontend/src/screens/ChatThreadScreen.tsx",
+        "frontend/src/screens/SettingsScreen.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-an-email-based-account-system-no-phone-number-that-allows-users-to-sign-up-sign-in-sign-out-and-persist-their-session-across-reloads-if-true-email-verification-is-not-possible-treat-the-email-as-an-identifier-with-clear-ux-copy-indicating-no-verification",
+      "featureTitle": "Implement an email-based account system (no phone number) that allows users to sign up, sign in, sign out, and persist their session across reloads. If true email verification is not possible, treat the email as an identifier (with clear UX copy indicating no verification).",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/screens/AuthScreen.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-whatsapp-style-messaging-non-real-time-users-can-create-select-1-1-conversations-send-text-messages-and-manually-refresh-to-retrieve-new-messages",
+      "featureTitle": "Implement WhatsApp-style messaging (non-real-time): users can create/select 1:1 conversations, send text messages, and manually refresh to retrieve new messages.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/screens/ChatListScreen.tsx",
+        "frontend/src/screens/ChatThreadScreen.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-provide-app-access-for-making-changes-by-adding-clear-developer-facing-documentation-and-in-app-pointers-explaining-how-to-modify-the-frontend-backend-and-redeploy-to-the-internet-computer-using-the-project-s-standard-workflow",
+      "featureTitle": "Provide “app access” for making changes by adding clear developer-facing documentation and in-app pointers explaining how to modify the frontend/backend and redeploy to the Internet Computer using the project’s standard workflow.",
+      "files": [
+        "frontend/README.md",
+        "frontend/src/components/DeveloperInfoCard.tsx",
+        "frontend/src/screens/SettingsScreen.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-apply-a-cohesive-distinct-visual-theme-for-whatchat-colors-typography-spacing-and-component-styling-and-enforce-it-consistently-across-auth-chat-list-thread-and-settings-screens-avoid-default-template-styling",
+      "featureTitle": "Apply a cohesive, distinct visual theme for Whatchat (colors, typography, spacing, and component styling) and enforce it consistently across Auth, Chat List, Thread, and Settings screens (avoid default template styling).",
+      "files": [
+        "frontend/index.css",
+        "frontend/src/components/WhatchatLayout.tsx",
+        "frontend/src/screens/AuthScreen.tsx",
+        "frontend/src/screens/ChatListScreen.tsx",
+        "frontend/src/screens/ChatThreadScreen.tsx",
+        "frontend/src/screens/SettingsScreen.tsx",
+        "frontend/tailwind.config.js"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

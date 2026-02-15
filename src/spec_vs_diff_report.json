@@ -1,0 +1,98 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-15T05:58:54.318Z",
+  "summary": "Diff implements a Whatchat-branded UI shell with routes (Auth/Chats/Thread/Settings), a teal/green theme, non-real-time messaging with manual refresh, basic profile (name/email) storage, and an in-app Developer Info card plus a frontend README. However, it does not implement the required email+password account system and uses Internet Identity/Principal IDs instead of email identifiers for auth and starting chats. Some additional features (unread counts, mark-as-read, access-control initialization via secret token) appear beyond the request.",
+  "missing_requirements": [
+    {
+      "id": "REQ-2",
+      "requirement": "Implement an email-based account system (sign up/in/out with email + password or equivalent), prevent duplicate email registrations, persist session across reloads, and clearly indicate verified/unverified status.",
+      "reason": "Frontend auth flow uses Internet Identity (no email+password sign-up/sign-in), and backend shows no credential/session management keyed by email; email is only collected as an unverified profile field.",
+      "evidence": [
+        "frontend/src/screens/AuthScreen.tsx",
+        "frontend/src/hooks/useInternetIdentity.ts",
+        "frontend/src/components/ProfileSetupModal.tsx",
+        "backend/main.mo"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Allow starting/selecting 1:1 conversations via the other user’s email identifier.",
+      "reason": "New chats are started by entering a Recipient Principal ID, and thread addressing is derived from Principal IDs; no email-to-user lookup or email-based conversation creation is evidenced.",
+      "evidence": [
+        "frontend/src/screens/ChatListScreen.tsx",
+        "frontend/src/screens/SettingsScreen.tsx",
+        "backend/main.mo"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Provide a top-level README (or equivalent documentation page) describing how to run locally, build, deploy, and where to modify key UI text/styles and core backend logic.",
+      "reason": "Only a README under frontend/ is shown; the diff does not evidence a repository top-level README meeting the requirement.",
+      "evidence": [
+        "frontend/README.md"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Internet Identity-based authentication flow (Sign In with Internet Identity) instead of email/password accounts.",
+      "reason": "BuildRequest explicitly requires an email-based account system and lists third-party auth providers as non-goals; Internet Identity auth is implemented in the UI and hooks.",
+      "evidence": [
+        "frontend/src/screens/AuthScreen.tsx",
+        "frontend/src/hooks/useInternetIdentity.ts",
+        "frontend/src/main.tsx"
+      ]
+    },
+    {
+      "description": "Principal-ID-based chat initiation and display of Principal ID for sharing.",
+      "reason": "Requested identifier for user-to-user conversation creation is email; implementing Principal-ID-based initiation goes beyond/contradicts the specified UX.",
+      "evidence": [
+        "frontend/src/screens/ChatListScreen.tsx",
+        "frontend/src/screens/SettingsScreen.tsx"
+      ]
+    },
+    {
+      "description": "Unread message count badge and mark-as-read functionality.",
+      "reason": "Not requested by any REQ/AC; implemented via hooks and layout badge usage.",
+      "evidence": [
+        "frontend/src/components/WhatchatLayout.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ]
+    },
+    {
+      "description": "Access control initialization via a secret URL parameter (caffeineAdminToken) and backend authorization mixin usage.",
+      "reason": "Not requested; introduces admin-token-based initialization and authorization framework beyond the stated requirements.",
+      "evidence": [
+        "frontend/src/hooks/useActor.ts",
+        "frontend/src/utils/urlParams.ts",
+        "backend/main.mo"
+      ]
+    }
+  ],
+  "confidence": 0.78,
+  "changed_files": [
+    "all_files_summary.json",
+    "backend/main.mo",
+    "frontend-file-summaries.txt",
+    "frontend/README.md",
+    "frontend/index.css",
+    "frontend/index.html",
+    "frontend/src/App.tsx",
+    "frontend/src/components/DeveloperInfoCard.tsx",
+    "frontend/src/components/ProfileSetupModal.tsx",
+    "frontend/src/components/WhatchatLayout.tsx",
+    "frontend/src/hooks/useActor.ts",
+    "frontend/src/hooks/useInternetIdentity.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/index.css",
+    "frontend/src/main.tsx",
+    "frontend/src/screens/AuthScreen.tsx",
+    "frontend/src/screens/ChatListScreen.tsx",
+    "frontend/src/screens/ChatThreadScreen.tsx",
+    "frontend/src/screens/SettingsScreen.tsx",
+    "frontend/src/utils/urlParams.ts",
+    "frontend/tailwind.config.js",
+    "project_state.json"
+  ]
+}
