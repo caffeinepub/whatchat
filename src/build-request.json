@@ -1,116 +1,94 @@
 {
   "kind": "build_request",
-  "title": "Whatchat: WhatsApp-style messaging app with email-based accounts and clear project access for user edits",
+  "title": "Add voice call and video call options to Whatchat (non-real-time signaling)",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-1",
-      "text": "Create the Whatchat app shell with core navigation: an authentication flow, a chat list view, a chat detail (thread) view, and a basic settings/profile view.",
+      "id": "REQ-6",
+      "text": "Add voice call and video call actions in the 1:1 chat thread UI so a user can start a voice or video call with the other participant in the conversation.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-2",
-          "msg-9"
+          "msg-20"
         ],
         "quotes": [
-          "Create a same WhatsApp app function app but login without phone number and with email and the app name is \"Whatchat\"",
-          "I mean I need my app access to i add changes to my app"
+          "Ass video call and voice call options"
         ]
       },
       "acceptanceCriteria": [
-        "App name is shown as “Whatchat” in the UI header and/or landing screen.",
-        "Users can navigate between Auth, Chat List, Chat Thread, and Settings screens using a consistent layout.",
-        "All user-facing text is in English."
+        "In ChatThreadScreen, the header shows two distinct actions: “Voice call” and “Video call” (icons acceptable).",
+        "If the app cannot determine the recipient principal from the conversationId, the call actions are disabled and show an error toast/message on click (English).",
+        "Clicking either action opens a call UI (modal or full-screen) that clearly indicates call type (Voice/Video) and the contact identifier (at minimum, the other principal)."
       ]
     },
     {
-      "id": "REQ-2",
-      "text": "Implement an email-based account system (no phone number) that allows users to sign up, sign in, sign out, and persist their session across reloads. If true email verification is not possible, treat the email as an identifier (with clear UX copy indicating no verification).",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-2"
-        ],
-        "quotes": [
-          "login without phone number and with email"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Sign up requires at minimum: email + password (or equivalent credential) and prevents duplicate email registrations.",
-        "Sign in validates credentials and starts a session that remains valid after a page refresh.",
-        "Sign out clears the local session and blocks access to chats until sign-in.",
-        "UI clearly indicates whether the email is verified or unverified (if verification is not implemented)."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Implement WhatsApp-style messaging (non-real-time): users can create/select 1:1 conversations, send text messages, and manually refresh to retrieve new messages.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-2",
-          "msg-3"
-        ],
-        "quotes": [
-          "Create a same WhatsApp app function app",
-          "real-time chat (like WhatsApp) is not supported on this platform because real-time technologies such as WebSockets are not allowed."
-        ]
-      },
-      "acceptanceCriteria": [
-        "A user can start a conversation with another user by selecting/adding them via their email identifier.",
-        "Users can send text messages in a thread and see them appended in chronological order.",
-        "There is an explicit Refresh action that fetches new messages and updates the thread.",
-        "The UI indicates that messages are not real-time (e.g., “Pull/Click to refresh”)."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Provide “app access” for making changes by adding clear developer-facing documentation and in-app pointers explaining how to modify the frontend/backend and redeploy to the Internet Computer using the project’s standard workflow.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-9"
-        ],
-        "quotes": [
-          "I mean I need my app access to i add changes to my app"
-        ]
-      },
-      "acceptanceCriteria": [
-        "A top-level README (or equivalent documentation page) exists describing: how to run locally, how to build, and how to deploy.",
-        "Documentation includes where to change key UI text/styles and where core backend logic (auth/messages) lives.",
-        "The app includes an “About / Developer Info” section (e.g., in Settings) that links to or summarizes where to edit code and how to redeploy (no external services required)."
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Apply a cohesive, distinct visual theme for Whatchat (colors, typography, spacing, and component styling) and enforce it consistently across Auth, Chat List, Thread, and Settings screens (avoid default template styling).",
+      "id": "REQ-7",
+      "text": "Implement an MVP call experience using WebRTC in the browser with controls for starting, accepting, ending, and handling permission errors for microphone/camera.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-2"
+          "msg-20"
         ],
         "quotes": [
-          "the app name is \"Whatchat\""
+          "Ass video call and voice call options"
         ]
       },
       "acceptanceCriteria": [
-        "Theme is consistent across all screens (same primary/secondary colors, typography scale, spacing).",
-        "Theme does not use a blue/purple-dominant palette unless explicitly requested later.",
-        "UI is mobile-first and resembles a modern messenger layout (chat list + thread patterns)."
+        "Starting a voice call requests microphone permission; starting a video call requests camera + microphone permissions.",
+        "If permission is denied or no device is available, show a clear English error state and allow the user to close the call UI without breaking chat.",
+        "The call UI provides at least: End call button; mute/unmute for voice and video calls; camera on/off for video calls.",
+        "When a call is ended locally, the UI exits back to the chat thread and cleans up media tracks/peer connection."
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "text": "Add backend support for 1:1 call signaling and call session tracking (offer/answer/ICE candidates and basic call state) so two Whatchat users can establish a WebRTC connection without external services.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-20"
+        ],
+        "quotes": [
+          "Ass video call and voice call options"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend exposes call-related APIs to: create/start a call to a receiver principal; fetch call session state by session id; post SDP offer/answer; post ICE candidates; end a call.",
+        "All call APIs enforce that only authenticated users with #user permission can access them, and only call participants can read/write signaling data for that call.",
+        "Call session data is scoped to exactly two participants (1:1) and cannot be read by other principals.",
+        "The backend returns clear error traps/messages for unauthorized access, missing sessions, or invalid participant actions."
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "text": "Add React Query hooks and UI refresh behavior for call signaling that works without real-time transport, using manual refresh and/or short-interval polling while the call UI is open.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-20"
+        ],
+        "quotes": [
+          "Ass video call and voice call options"
+        ]
+      },
+      "acceptanceCriteria": [
+        "New hooks exist in frontend/src/hooks/useQueries.ts for the call signaling operations (create/start, get session, post offer/answer/candidates, end).",
+        "While the call UI is open, the app periodically checks for updated signaling/call state (polling) or provides a visible “Refresh” control to progress the call; at least one of these is implemented so calls can connect without WebSockets.",
+        "Polling/refresh stops when the call ends or the user closes the call UI.",
+        "User-facing text explains that calling may take a moment because it is not real-time (English)."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo (no multi-service architecture).",
-    "Do not use WebSockets or any real-time transport; messaging must work via manual refresh/poll-style fetch.",
-    "Do not modify files under frontend immutable paths (frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui); compose them instead.",
-    "Use English for any user-facing text."
+    "Backend must remain a single Motoko actor with all logic in backend/main.mo; only add backend/migration.mo if an upgrade-safe state migration is truly required.",
+    "Do not edit files under frontend/src/components/ui or any paths listed as immutable in SYSTEM_CONTEXT.",
+    "Do not add WebSockets or any real-time chat/call transport; use request/response + polling/manual refresh only.",
+    "Use English for all user-facing text."
   ],
   "nonGoals": [
-    "True WhatsApp-level real-time typing indicators, online presence, or instantaneous message delivery.",
-    "Third-party authentication providers (Google/Facebook/GitHub/Auth0) or external email/SMS verification services.",
-    "Push notifications, SMS, or email sending integrations.",
-    "End-to-end encryption guarantees."
+    "Group voice/video calls.",
+    "Call recording, call history, missed-call notifications, or push notifications.",
+    "Third-party calling/signaling services or external databases."
   ],
   "imageRequirements": {
     "required": [],

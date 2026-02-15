@@ -1,14 +1,16 @@
 import Map "mo:core/Map";
 import Array "mo:core/Array";
 import Text "mo:core/Text";
+import Time "mo:core/Time";
 import Runtime "mo:core/Runtime";
 import Principal "mo:core/Principal";
+import List "mo:core/List";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
-import Time "mo:core/Time";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
-  // Initialize the authorization system and include for all apps that manage personal or access-restricted data
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
@@ -16,8 +18,6 @@ actor {
     email : Text;
     name : Text;
   };
-
-  public type ConversationId = Text;
 
   public type Message = {
     id : Nat;
@@ -29,38 +29,49 @@ actor {
   };
 
   public type Conversation = {
-    id : ConversationId;
+    id : Text;
     participants : [Principal];
     messages : Map.Map<Nat, Message>;
   };
 
+  public type CallOffer = {
+    offer : Text;
+    caller : Principal;
+    callee : Principal;
+    timestamp : Int;
+  };
+
+  public type CallAnswer = {
+    answer : Text;
+    caller : Principal;
+    callee : Principal;
+    timestamp : Int;
+  };
+
+  public type Candidate = {
+    candidate : Text;
+    sender : Principal;
+    receiver : Principal;
+    timestamp : Int;
+  };
+
+  public type CallStatus = {
+    caller : Principal;
+    callee : Principal;
+    status : Text;
+    timestamp : Int;
+  };
+
   let userProfiles = Map.empty<Principal, UserProfile>();
-  let conversations = Map.empty<ConversationId, Conversation>();
+  let conversations = Map.empty<Text, Conversation>();
+  let calls = Map.empty<Text, {
+    offer : ?CallOffer;
+    answer : ?CallAnswer;
+    candidates : List.List<Candidate>;
+    status : CallStatus;
+  }>();
 
-  // User Profile Management
-  public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can view profiles");
-    };
-    userProfiles.get(caller);
-  };
-
-  public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
-    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Can only view your own profile");
-    };
-    userProfiles.get(user);
-  };
-
-  public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can save profiles");
-    };
-    userProfiles.add(caller, profile);
-  };
-
-  // Messaging System
-  func getConversationId(user1 : Principal, user2 : Principal) : ConversationId {
+  func getConversationId(user1 : Principal, user2 : Principal) : Text {
     let ids = [user1.toText(), user2.toText()];
     let sorted = ids.sort();
     sorted[0].concat(sorted[1]);
@@ -78,131 +89,114 @@ actor {
     conversation.participants.any(func(p : Principal) : Bool { p == user });
   };
 
-  public shared ({ caller }) func sendMessage(receiver : Principal, content : Text) : async Message {
+  public shared ({ caller }) func sendOffer(callee : Principal, offer : Text) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only users can send messages");
+      Runtime.trap("Unauthorized: Only users can initiate calls");
     };
 
-    // Ensure conversation exists
-    let conversationId = getConversationId(caller, receiver);
+    let callKey = getConversationId(caller, callee);
 
-    let conversation = switch (conversations.get(conversationId)) {
-      case (null) { createConversation(caller, receiver) };
-      case (?conv) { conv };
-    };
-
-    // Create a new message ID based on current timestamp
-    let newMessageId = Time.now();
-
-    // Create the new message
-    let newMessage : Message = {
-      id = newMessageId.toNat();
-      sender = caller;
-      receiver;
-      content;
+    let newOffer : CallOffer = {
+      offer;
+      caller;
+      callee;
       timestamp = Time.now();
-      isRead = false;
     };
 
-    // Add the new message to the conversation
-    conversation.messages.add(newMessageId.toNat(), newMessage);
+    let newStatus : CallStatus = {
+      caller;
+      callee;
+      status = "ringing";
+      timestamp = Time.now();
+    };
 
-    // Store the updated conversation in the main conversations Map
-    conversations.add(conversationId, conversation);
-
-    newMessage;
+    calls.add(callKey, {
+      offer = ?newOffer;
+      answer = null;
+      candidates = List.empty<Candidate>();
+      status = newStatus;
+    });
   };
 
-  public shared query ({ caller }) func getConversationIds() : async [ConversationId] {
+  public shared ({ caller }) func sendAnswer(callerPrincipal : Principal, answer : Text) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only users can retrieve conversations");
+      Runtime.trap("Unauthorized: Only users can answer calls");
     };
 
-    conversations.filter(
-      func(_, conversation) { isParticipant(conversation, caller) }
-    ).keys().toArray();
-  };
+    let callKey = getConversationId(caller, callerPrincipal);
 
-  public query ({ caller }) func getConversationMessages(conversationId : ConversationId) : async [Message] {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only users can retrieve messages");
-    };
-
-    switch (conversations.get(conversationId)) {
-      case (null) { Runtime.trap("Conversation not found") };
-      case (?conversation) {
-        if (not isParticipant(conversation, caller)) {
-          Runtime.trap("Unauthorized: You are not a participant in this conversation");
-        };
-        conversation.messages.values().toArray();
-      };
-    };
-  };
-
-  public query ({ caller }) func getUnreadMessages(conversationId : ConversationId) : async [Message] {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only users can retrieve messages");
-    };
-
-    switch (conversations.get(conversationId)) {
-      case (null) { Runtime.trap("Conversation not found") };
-      case (?conversation) {
-        if (not isParticipant(conversation, caller)) {
-          Runtime.trap("Unauthorized: You are not a participant in this conversation");
-        };
-        conversation.messages.values().toArray().filter(
-          func(msg) { msg.receiver == caller and not msg.isRead }
-        );
-      };
-    };
-  };
-
-  public shared ({ caller }) func markMessagesAsRead(conversationId : ConversationId) : async () {
-    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only users can mark messages as read");
-    };
-
-    switch (conversations.get(conversationId)) {
-      case (null) { Runtime.trap("Conversation not found") };
-      case (?conversation) {
-        if (not isParticipant(conversation, caller)) {
-          Runtime.trap("Unauthorized: You are not a participant in this conversation");
-        };
-
-        var updatedMessages = conversation.messages;
-        conversation.messages.forEach(
-          func(messageId, message) {
-            if (message.receiver == caller) {
-              let updatedMessage = {
-                message with
-                isRead = true;
-              };
-              updatedMessages.add(messageId, updatedMessage);
+    switch (calls.get(callKey)) {
+      case (null) { Runtime.trap("No offer found for this call") };
+      case (?call) {
+        switch (call.offer) {
+          case (null) { Runtime.trap("No offer found for this call") };
+          case (?offer) {
+            if (offer.callee != caller) {
+              Runtime.trap("Unauthorized: You are not the intended recipient of this call");
             };
-          }
-        );
+          };
+        };
+      };
+    };
+
+    let newAnswer : CallAnswer = {
+      answer;
+      caller : Principal = callerPrincipal;
+      callee = caller;
+      timestamp = Time.now();
+    };
+
+    switch (calls.get(callKey)) {
+      case (null) { Runtime.trap("No offer found for this call") };
+      case (?call) {
+        let updatedCall = {
+          call with
+          answer = ?newAnswer;
+          status = {
+            call.status with
+            status = "answered";
+          };
+        };
+        calls.add(callKey, updatedCall);
       };
     };
   };
 
-  public query ({ caller }) func getUnreadMessageCount() : async Nat {
+  public shared ({ caller }) func sendCandidate(receiver : Principal, candidate : Text) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
-      Runtime.trap("Unauthorized: Only users can retrieve unread message count");
+      Runtime.trap("Unauthorized: Only users can send candidates");
     };
 
-    var unreadCount = 0;
-    conversations.filter(func(_, conversation) { isParticipant(conversation, caller) }).values().forEach(
-      func(conversation) {
-        conversation.messages.values().forEach(
-          func(msg) { if (msg.receiver == caller and not msg.isRead) { unreadCount += 1 } }
-        );
-      }
-    );
-    unreadCount;
-  };
+    let callKey = getConversationId(caller, receiver);
 
-  // Development instructions pointing to the full documentation
-  public query ({ caller }) func getDevDocumentationUrl() : async Text {
-    "To make changes, follow the instructions in the developer console or full documentation at app-access.internetcomputer.com. Built by the Haisch Team 2024.";
+    switch (calls.get(callKey)) {
+      case (null) { Runtime.trap("No active call found") };
+      case (?call) {
+        if (call.status.caller != caller and call.status.callee != caller) {
+          Runtime.trap("Unauthorized: You are not a participant in this call");
+        };
+
+        let newCandidate : Candidate = {
+          candidate;
+          sender = caller;
+          receiver;
+          timestamp = Time.now();
+        };
+
+        let updatedCandidates = switch (call.candidates.isEmpty()) {
+          case (true) { List.singleton<Candidate>(newCandidate) };
+          case (false) {
+            call.candidates.add(newCandidate);
+            call.candidates;
+          };
+        };
+
+        let updatedCall = {
+          call with
+          candidates = updatedCandidates;
+        };
+        calls.add(callKey, updatedCall);
+      };
+    };
   };
 };

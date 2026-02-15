@@ -1,14 +1,16 @@
 {
   "frontend/src/App.tsx": "Main application component with TanStack Router setup, route definitions for auth/chats/settings screens, and ThemeProvider/Toaster wrappers for the entire app.",
-  "frontend/src/hooks/useQueries.ts": "React Query hooks for all backend operations including user profiles, conversations, messages, sending messages, marking as read, and unread counts with proper cache invalidation.",
+  "frontend/src/hooks/useQueries.ts": "React Query hooks for all backend operations with local type definitions for UserProfile, Message, and ConversationId, plus extended actor interface casting to handle missing types in generated backend interface, including chat operations and call signaling with proper error handling.",
   "frontend/src/components/WhatchatLayout.tsx": "App layout component with header showing Whatchat branding, logout/settings buttons, and mobile bottom navigation with unread message badge.",
   "frontend/src/components/ProfileSetupModal.tsx": "Modal dialog for first-time user profile setup that collects name and email with a note that email is unverified.",
   "frontend/src/screens/AuthScreen.tsx": "Landing/authentication screen with Internet Identity login, feature highlights, and welcome messaging for Whatchat.",
   "frontend/src/screens/ChatListScreen.tsx": "Chat list view showing all conversations with refresh button, start new chat dialog (requires Principal ID input), and empty state.",
-  "frontend/src/screens/ChatThreadScreen.tsx": "Individual chat thread view with message bubbles, manual refresh button, send message input, and non-realtime notice banner.",
+  "frontend/src/screens/ChatThreadScreen.tsx": "Individual chat thread view with message bubbles, manual refresh, send message input, voice/video call buttons in header, and CallModal integration for initiating calls.",
   "frontend/src/screens/SettingsScreen.tsx": "Settings screen displaying user profile info, copyable Principal ID for sharing, developer info card, and footer attribution.",
   "frontend/src/components/DeveloperInfoCard.tsx": "Card component showing developer instructions for modifying frontend/backend code, deployment steps, and quick start guide.",
   "frontend/README.md": "Comprehensive developer documentation covering project structure, installation, making changes to UI/backend, deployment instructions, and troubleshooting.",
   "frontend/src/index.css": "Global styles with OKLCH-based teal/green color theme for both light and dark modes, avoiding blue/purple palette.",
-  "frontend/tailwind.config.js": "Tailwind configuration extending the theme with Whatchat's teal/green color tokens and custom design system."
+  "frontend/tailwind.config.js": "Tailwind configuration extending the theme with Whatchat's teal/green color tokens and custom design system.",
+  "frontend/src/hooks/useWebRTCCall.ts": "Custom React hook managing WebRTC peer connection lifecycle including media initialization, offer/answer creation, ICE candidate handling, mute/camera toggles, and cleanup for voice and video calls.",
+  "frontend/src/components/CallModal.tsx": "Full-screen modal dialog component for voice/video calls displaying local/remote streams, call controls (mute, camera, end), connection status, and permission error handling with WebRTC integration."
 }

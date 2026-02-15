@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 3,
+  "projectStateVersion": 5,
   "summary": "Build \"Whatchat\", a WhatsApp-like messaging app with email-based login (no phone number) and user access to the app/codebase so they can make changes.",
   "architectural_notes": [],
   "known_issues": [],
@@ -45,6 +45,30 @@
         "REQ-5"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-add-voice-call-and-video-call-actions-in-the-1-1-chat-thread-ui-so-a-user-can-start-a-voice-or-video-call-with-the-other-participant-in-the-conversation",
+      "title": "Add voice call and video call actions in the 1:1 chat thread UI so a user can start a voice or video call with the other participant in the conversation.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-an-mvp-call-experience-using-webrtc-in-the-browser-with-controls-for-starting-accepting-ending-and-handling-permission-errors-for-microphone-camera",
+      "title": "Implement an MVP call experience using WebRTC in the browser with controls for starting, accepting, ending, and handling permission errors for microphone/camera.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-react-query-hooks-and-ui-refresh-behavior-for-call-signaling-that-works-without-real-time-transport-using-manual-refresh-and-or-short-interval-polling-while-the-call-ui-is-open",
+      "title": "Add React Query hooks and UI refresh behavior for call signaling that works without real-time transport, using manual refresh and/or short-interval polling while the call UI is open.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -64,6 +88,20 @@
       "id": "AR-3",
       "summary": "Provide user access to the app project (codebase/editor/build instructions) so they can modify and add changes",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Add voice call and video call options to Whatchat",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Add backend support for 1:1 call signaling and call session tracking (offer/answer/ICE candidates and basic call state) so two Whatchat users can establish a WebRTC connection without external services.",
+      "reqIds": [
+        "REQ-8"
+      ],
       "status": "pending"
     }
   ],

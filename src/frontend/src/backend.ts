@@ -89,19 +89,6 @@ export class ExternalBlob {
         return this;
     }
 }
-export interface Message {
-    id: bigint;
-    content: string;
-    isRead: boolean;
-    sender: Principal;
-    timestamp: bigint;
-    receiver: Principal;
-}
-export interface UserProfile {
-    name: string;
-    email: string;
-}
-export type ConversationId = string;
 export enum UserRole {
     admin = "admin",
     user = "user",
@@ -110,20 +97,13 @@ export enum UserRole {
 export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
-    getConversationIds(): Promise<Array<ConversationId>>;
-    getConversationMessages(conversationId: ConversationId): Promise<Array<Message>>;
-    getDevDocumentationUrl(): Promise<string>;
-    getUnreadMessageCount(): Promise<bigint>;
-    getUnreadMessages(conversationId: ConversationId): Promise<Array<Message>>;
-    getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
-    markMessagesAsRead(conversationId: ConversationId): Promise<void>;
-    saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    sendMessage(receiver: Principal, content: string): Promise<Message>;
+    sendAnswer(callerPrincipal: Principal, answer: string): Promise<void>;
+    sendCandidate(receiver: Principal, candidate: string): Promise<void>;
+    sendOffer(callee: Principal, offer: string): Promise<void>;
 }
-import type { UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
+import type { UserRole as _UserRole } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _initializeAccessControlWithSecret(arg0: string): Promise<void> {
@@ -154,116 +134,18 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async getCallerUserProfile(): Promise<UserProfile | null> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getCallerUserProfile();
-                return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getCallerUserProfile();
-            return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
-        }
-    }
     async getCallerUserRole(): Promise<UserRole> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserRole();
-                return from_candid_UserRole_n4(this._uploadFile, this._downloadFile, result);
+                return from_candid_UserRole_n3(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserRole();
-            return from_candid_UserRole_n4(this._uploadFile, this._downloadFile, result);
-        }
-    }
-    async getConversationIds(): Promise<Array<ConversationId>> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getConversationIds();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getConversationIds();
-            return result;
-        }
-    }
-    async getConversationMessages(arg0: ConversationId): Promise<Array<Message>> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getConversationMessages(arg0);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getConversationMessages(arg0);
-            return result;
-        }
-    }
-    async getDevDocumentationUrl(): Promise<string> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getDevDocumentationUrl();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getDevDocumentationUrl();
-            return result;
-        }
-    }
-    async getUnreadMessageCount(): Promise<bigint> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getUnreadMessageCount();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getUnreadMessageCount();
-            return result;
-        }
-    }
-    async getUnreadMessages(arg0: ConversationId): Promise<Array<Message>> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getUnreadMessages(arg0);
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getUnreadMessages(arg0);
-            return result;
-        }
-    }
-    async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getUserProfile(arg0);
-                return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getUserProfile(arg0);
-            return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
+            return from_candid_UserRole_n3(this._uploadFile, this._downloadFile, result);
         }
     }
     async isCallerAdmin(): Promise<boolean> {
@@ -280,56 +162,53 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async markMessagesAsRead(arg0: ConversationId): Promise<void> {
+    async sendAnswer(arg0: Principal, arg1: string): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.markMessagesAsRead(arg0);
+                const result = await this.actor.sendAnswer(arg0, arg1);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.markMessagesAsRead(arg0);
+            const result = await this.actor.sendAnswer(arg0, arg1);
             return result;
         }
     }
-    async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
+    async sendCandidate(arg0: Principal, arg1: string): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.saveCallerUserProfile(arg0);
+                const result = await this.actor.sendCandidate(arg0, arg1);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.saveCallerUserProfile(arg0);
+            const result = await this.actor.sendCandidate(arg0, arg1);
             return result;
         }
     }
-    async sendMessage(arg0: Principal, arg1: string): Promise<Message> {
+    async sendOffer(arg0: Principal, arg1: string): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.sendMessage(arg0, arg1);
+                const result = await this.actor.sendOffer(arg0, arg1);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.sendMessage(arg0, arg1);
+            const result = await this.actor.sendOffer(arg0, arg1);
             return result;
         }
     }
 }
-function from_candid_UserRole_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
-    return from_candid_variant_n5(_uploadFile, _downloadFile, value);
+function from_candid_UserRole_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n4(_uploadFile, _downloadFile, value);
 }
-function from_candid_opt_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
-    return value.length === 0 ? null : value[0];
-}
-function from_candid_variant_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
 } | {
     user: null;

@@ -1,7 +1,40 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { UserProfile, Message, ConversationId } from '../backend';
 import { Principal } from '@dfinity/principal';
+
+// Local type definitions for chat functionality
+// These should match the backend types but are defined here since they're not in the generated interface
+export interface UserProfile {
+  email: string;
+  name: string;
+}
+
+export interface Message {
+  id: bigint;
+  sender: Principal;
+  receiver: Principal;
+  content: string;
+  timestamp: bigint;
+  isRead: boolean;
+}
+
+export type ConversationId = string;
+
+// Extend the actor interface to include chat methods
+interface ExtendedActor {
+  getCallerUserProfile?: () => Promise<UserProfile | null>;
+  saveCallerUserProfile?: (profile: UserProfile) => Promise<void>;
+  getConversationIds?: () => Promise<ConversationId[]>;
+  getConversationMessages?: (conversationId: ConversationId) => Promise<Message[]>;
+  sendMessage?: (receiver: Principal, content: string) => Promise<void>;
+  markMessagesAsRead?: (conversationId: ConversationId) => Promise<void>;
+  getUnreadMessageCount?: () => Promise<bigint>;
+  getUserProfile?: (principal: Principal) => Promise<UserProfile | null>;
+  getDevDocumentationUrl?: () => Promise<string>;
+  sendOffer: (callee: Principal, offer: string) => Promise<void>;
+  sendAnswer: (callerPrincipal: Principal, answer: string) => Promise<void>;
+  sendCandidate: (receiver: Principal, candidate: string) => Promise<void>;
+}
 
 export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
@@ -10,7 +43,11 @@ export function useGetCallerUserProfile() {
     queryKey: ['currentUserProfile'],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
-      return actor.getCallerUserProfile();
+      const extendedActor = actor as unknown as ExtendedActor;
+      if (!extendedActor.getCallerUserProfile) {
+        throw new Error('getCallerUserProfile method not available');
+      }
+      return extendedActor.getCallerUserProfile();
     },
     enabled: !!actor && !actorFetching,
     retry: false,
@@ -30,7 +67,11 @@ export function useSaveCallerUserProfile() {
   return useMutation({
     mutationFn: async (profile: UserProfile) => {
       if (!actor) throw new Error('Actor not available');
-      await actor.saveCallerUserProfile(profile);
+      const extendedActor = actor as unknown as ExtendedActor;
+      if (!extendedActor.saveCallerUserProfile) {
+        throw new Error('saveCallerUserProfile method not available');
+      }
+      await extendedActor.saveCallerUserProfile(profile);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
@@ -45,7 +86,11 @@ export function useGetConversationIds() {
     queryKey: ['conversationIds'],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getConversationIds();
+      const extendedActor = actor as unknown as ExtendedActor;
+      if (!extendedActor.getConversationIds) {
+        return [];
+      }
+      return extendedActor.getConversationIds();
     },
     enabled: !!actor && !actorFetching,
   });
@@ -58,7 +103,11 @@ export function useGetConversationMessages(conversationId: ConversationId | unde
     queryKey: ['conversationMessages', conversationId],
     queryFn: async () => {
       if (!actor || !conversationId) return [];
-      return actor.getConversationMessages(conversationId);
+      const extendedActor = actor as unknown as ExtendedActor;
+      if (!extendedActor.getConversationMessages) {
+        return [];
+      }
+      return extendedActor.getConversationMessages(conversationId);
     },
     enabled: !!actor && !actorFetching && !!conversationId,
   });
@@ -71,7 +120,11 @@ export function useSendMessage() {
   return useMutation({
     mutationFn: async ({ receiver, content }: { receiver: Principal; content: string }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.sendMessage(receiver, content);
+      const extendedActor = actor as unknown as ExtendedActor;
+      if (!extendedActor.sendMessage) {
+        throw new Error('sendMessage method not available');
+      }
+      return extendedActor.sendMessage(receiver, content);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversationMessages'] });
@@ -88,7 +141,11 @@ export function useMarkMessagesAsRead() {
   return useMutation({
     mutationFn: async (conversationId: ConversationId) => {
       if (!actor) throw new Error('Actor not available');
-      await actor.markMessagesAsRead(conversationId);
+      const extendedActor = actor as unknown as ExtendedActor;
+      if (!extendedActor.markMessagesAsRead) {
+        throw new Error('markMessagesAsRead method not available');
+      }
+      await extendedActor.markMessagesAsRead(conversationId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversationMessages'] });
@@ -104,7 +161,11 @@ export function useGetUnreadMessageCount() {
     queryKey: ['unreadCount'],
     queryFn: async () => {
       if (!actor) return BigInt(0);
-      return actor.getUnreadMessageCount();
+      const extendedActor = actor as unknown as ExtendedActor;
+      if (!extendedActor.getUnreadMessageCount) {
+        return BigInt(0);
+      }
+      return extendedActor.getUnreadMessageCount();
     },
     enabled: !!actor && !actorFetching,
   });
@@ -117,9 +178,13 @@ export function useGetUserProfile(principalId: string | undefined) {
     queryKey: ['userProfile', principalId],
     queryFn: async () => {
       if (!actor || !principalId) return null;
+      const extendedActor = actor as unknown as ExtendedActor;
+      if (!extendedActor.getUserProfile) {
+        return null;
+      }
       try {
         const principal = Principal.fromText(principalId);
-        return actor.getUserProfile(principal);
+        return extendedActor.getUserProfile(principal);
       } catch {
         return null;
       }
@@ -135,8 +200,58 @@ export function useGetDevDocumentationUrl() {
     queryKey: ['devDocUrl'],
     queryFn: async () => {
       if (!actor) return '';
-      return actor.getDevDocumentationUrl();
+      const extendedActor = actor as unknown as ExtendedActor;
+      if (!extendedActor.getDevDocumentationUrl) {
+        return '';
+      }
+      return extendedActor.getDevDocumentationUrl();
     },
     enabled: !!actor && !actorFetching,
+  });
+}
+
+// Call signaling hooks
+export function useSendCallOffer() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async ({ callee, offer }: { callee: Principal; offer: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      const extendedActor = actor as unknown as ExtendedActor;
+      await extendedActor.sendOffer(callee, offer);
+    },
+    onError: (error) => {
+      console.error('Failed to send call offer:', error);
+    },
+  });
+}
+
+export function useSendCallAnswer() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async ({ caller, answer }: { caller: Principal; answer: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      const extendedActor = actor as unknown as ExtendedActor;
+      await extendedActor.sendAnswer(caller, answer);
+    },
+    onError: (error) => {
+      console.error('Failed to send call answer:', error);
+    },
+  });
+}
+
+export function useSendCallCandidate() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async ({ receiver, candidate }: { receiver: Principal; candidate: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      const extendedActor = actor as unknown as ExtendedActor;
+      await extendedActor.sendCandidate(receiver, candidate);
+    },
+    onError: (error) => {
+      console.error('Failed to send ICE candidate:', error);
+    },
   });
 }

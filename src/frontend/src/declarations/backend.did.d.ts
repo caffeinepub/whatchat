@@ -10,34 +10,17 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export type ConversationId = string;
-export interface Message {
-  'id' : bigint,
-  'content' : string,
-  'isRead' : boolean,
-  'sender' : Principal,
-  'timestamp' : bigint,
-  'receiver' : Principal,
-}
-export interface UserProfile { 'name' : string, 'email' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
 export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
-  'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
-  'getConversationIds' : ActorMethod<[], Array<ConversationId>>,
-  'getConversationMessages' : ActorMethod<[ConversationId], Array<Message>>,
-  'getDevDocumentationUrl' : ActorMethod<[], string>,
-  'getUnreadMessageCount' : ActorMethod<[], bigint>,
-  'getUnreadMessages' : ActorMethod<[ConversationId], Array<Message>>,
-  'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
-  'markMessagesAsRead' : ActorMethod<[ConversationId], undefined>,
-  'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
-  'sendMessage' : ActorMethod<[Principal, string], Message>,
+  'sendAnswer' : ActorMethod<[Principal, string], undefined>,
+  'sendCandidate' : ActorMethod<[Principal, string], undefined>,
+  'sendOffer' : ActorMethod<[Principal, string], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

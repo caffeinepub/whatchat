@@ -13,47 +13,15 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
-export const UserProfile = IDL.Record({
-  'name' : IDL.Text,
-  'email' : IDL.Text,
-});
-export const ConversationId = IDL.Text;
-export const Message = IDL.Record({
-  'id' : IDL.Nat,
-  'content' : IDL.Text,
-  'isRead' : IDL.Bool,
-  'sender' : IDL.Principal,
-  'timestamp' : IDL.Int,
-  'receiver' : IDL.Principal,
-});
 
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-  'getConversationIds' : IDL.Func([], [IDL.Vec(ConversationId)], ['query']),
-  'getConversationMessages' : IDL.Func(
-      [ConversationId],
-      [IDL.Vec(Message)],
-      ['query'],
-    ),
-  'getDevDocumentationUrl' : IDL.Func([], [IDL.Text], ['query']),
-  'getUnreadMessageCount' : IDL.Func([], [IDL.Nat], ['query']),
-  'getUnreadMessages' : IDL.Func(
-      [ConversationId],
-      [IDL.Vec(Message)],
-      ['query'],
-    ),
-  'getUserProfile' : IDL.Func(
-      [IDL.Principal],
-      [IDL.Opt(UserProfile)],
-      ['query'],
-    ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-  'markMessagesAsRead' : IDL.Func([ConversationId], [], []),
-  'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-  'sendMessage' : IDL.Func([IDL.Principal, IDL.Text], [Message], []),
+  'sendAnswer' : IDL.Func([IDL.Principal, IDL.Text], [], []),
+  'sendCandidate' : IDL.Func([IDL.Principal, IDL.Text], [], []),
+  'sendOffer' : IDL.Func([IDL.Principal, IDL.Text], [], []),
 });
 
 export const idlInitArgs = [];
@@ -64,44 +32,15 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
-  const UserProfile = IDL.Record({ 'name' : IDL.Text, 'email' : IDL.Text });
-  const ConversationId = IDL.Text;
-  const Message = IDL.Record({
-    'id' : IDL.Nat,
-    'content' : IDL.Text,
-    'isRead' : IDL.Bool,
-    'sender' : IDL.Principal,
-    'timestamp' : IDL.Int,
-    'receiver' : IDL.Principal,
-  });
   
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-    'getConversationIds' : IDL.Func([], [IDL.Vec(ConversationId)], ['query']),
-    'getConversationMessages' : IDL.Func(
-        [ConversationId],
-        [IDL.Vec(Message)],
-        ['query'],
-      ),
-    'getDevDocumentationUrl' : IDL.Func([], [IDL.Text], ['query']),
-    'getUnreadMessageCount' : IDL.Func([], [IDL.Nat], ['query']),
-    'getUnreadMessages' : IDL.Func(
-        [ConversationId],
-        [IDL.Vec(Message)],
-        ['query'],
-      ),
-    'getUserProfile' : IDL.Func(
-        [IDL.Principal],
-        [IDL.Opt(UserProfile)],
-        ['query'],
-      ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-    'markMessagesAsRead' : IDL.Func([ConversationId], [], []),
-    'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-    'sendMessage' : IDL.Func([IDL.Principal, IDL.Text], [Message], []),
+    'sendAnswer' : IDL.Func([IDL.Principal, IDL.Text], [], []),
+    'sendCandidate' : IDL.Func([IDL.Principal, IDL.Text], [], []),
+    'sendOffer' : IDL.Func([IDL.Principal, IDL.Text], [], []),
   });
 };
 

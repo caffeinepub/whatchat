@@ -1,14 +1,16 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useGetConversationMessages, useSendMessage, useMarkMessagesAsRead } from '../hooks/useQueries';
+import { useGetConversationMessages, useSendMessage, useMarkMessagesAsRead, useSendCallOffer } from '../hooks/useQueries';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, RefreshCw, Send } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Send, Phone, Video } from 'lucide-react';
 import { toast } from 'sonner';
 import { Principal } from '@dfinity/principal';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
+import CallModal from '../components/CallModal';
+import { CallType } from '../hooks/useWebRTCCall';
 
 export default function ChatThreadScreen() {
   const navigate = useNavigate();
@@ -17,7 +19,10 @@ export default function ChatThreadScreen() {
   const { data: messages, refetch, isLoading } = useGetConversationMessages(conversationId);
   const sendMessage = useSendMessage();
   const markAsRead = useMarkMessagesAsRead();
+  const sendCallOffer = useSendCallOffer();
   const [messageText, setMessageText] = useState('');
+  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+  const [activeCallType, setActiveCallType] = useState<CallType>('voice');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const myPrincipal = identity?.getPrincipal().toText();
 
@@ -86,11 +91,42 @@ export default function ChatThreadScreen() {
     }
   };
 
+  const handleStartCall = (callType: CallType) => {
+    const recipient = getRecipientPrincipal();
+    if (!recipient) {
+      toast.error('Cannot start call: Could not determine recipient');
+      return;
+    }
+
+    setActiveCallType(callType);
+    setIsCallModalOpen(true);
+  };
+
+  const handleSendOffer = async (offer: string) => {
+    const recipient = getRecipientPrincipal();
+    if (!recipient) {
+      toast.error('Cannot send offer: Could not determine recipient');
+      return;
+    }
+
+    try {
+      await sendCallOffer.mutateAsync({ callee: recipient, offer });
+    } catch (error) {
+      console.error('Failed to send offer:', error);
+      toast.error('Failed to initiate call');
+    }
+  };
+
+  const handleCloseCall = () => {
+    setIsCallModalOpen(false);
+  };
+
   if (!identity) {
     return null;
   }
 
   const sortedMessages = messages ? [...messages].sort((a, b) => Number(a.timestamp - b.timestamp)) : [];
+  const recipientPrincipal = getRecipientPrincipal();
 
   return (
     <div className="h-full flex flex-col bg-background">
@@ -106,9 +142,29 @@ export default function ChatThreadScreen() {
               <p className="text-xs text-muted-foreground">{conversationId?.slice(0, 16)}...</p>
             </div>
           </div>
-          <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isLoading}>
-            <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleStartCall('voice')}
+              disabled={!recipientPrincipal}
+              title={recipientPrincipal ? 'Start voice call' : 'Cannot determine recipient'}
+            >
+              <Phone className="w-5 h-5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleStartCall('video')}
+              disabled={!recipientPrincipal}
+              title={recipientPrincipal ? 'Start video call' : 'Cannot determine recipient'}
+            >
+              <Video className="w-5 h-5" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isLoading}>
+              <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -177,6 +233,18 @@ export default function ChatThreadScreen() {
           </div>
         </div>
       </div>
+
+      {/* Call Modal */}
+      {recipientPrincipal && (
+        <CallModal
+          isOpen={isCallModalOpen}
+          onClose={handleCloseCall}
+          callType={activeCallType}
+          recipientPrincipal={recipientPrincipal}
+          isInitiator={true}
+          onSendOffer={handleSendOffer}
+        />
+      )}
     </div>
   );
 }
