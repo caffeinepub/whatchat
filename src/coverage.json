@@ -1,85 +1,77 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-15T08:45:54.597Z",
+  "generatedAt": "2026-02-15T09:39:41.104Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
+    "total": 3,
     "implemented": 3,
     "items": [
       {
-        "id": "REQ-6",
-        "summary": "Add voice call and video call actions in the 1:1 chat thread UI so a user can start a voice or video call with the other participant in the conversation.",
+        "id": "REQ-19",
+        "summary": "Implement an automatic sign-in restore flow so that when the app loads and an Internet Identity session/delegation already exists in the browser, the user is automatically taken into the app without needing to click “Sign In with Internet Identity”.",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/screens/AuthScreen.tsx",
+          "frontend/src/screens/ChatListScreen.tsx",
           "frontend/src/screens/ChatThreadScreen.tsx",
-          "frontend/src/components/CallModal.tsx"
+          "frontend/src/screens/SettingsScreen.tsx"
         ],
         "matchedFiles": [
+          "frontend/src/screens/AuthScreen.tsx",
+          "frontend/src/screens/ChatListScreen.tsx",
           "frontend/src/screens/ChatThreadScreen.tsx",
-          "frontend/src/components/CallModal.tsx"
+          "frontend/src/screens/SettingsScreen.tsx"
         ]
       },
       {
-        "id": "REQ-7",
-        "summary": "Implement an MVP call experience using WebRTC in the browser with controls for starting, accepting, ending, and handling permission errors for microphone/camera.",
+        "id": "REQ-20",
+        "summary": "Prevent confusing Auth-screen UI flicker during initial authentication bootstrapping by showing an explicit initialization/loading state until the Internet Identity provider finishes determining whether a session is already authenticated.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/CallModal.tsx",
-          "frontend/src/hooks/useWebRTCCall.ts",
-          "frontend/src/screens/ChatThreadScreen.tsx"
+          "frontend/src/screens/AuthScreen.tsx",
+          "frontend/src/screens/ChatListScreen.tsx",
+          "frontend/src/screens/ChatThreadScreen.tsx",
+          "frontend/src/screens/SettingsScreen.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/CallModal.tsx",
-          "frontend/src/hooks/useWebRTCCall.ts",
-          "frontend/src/screens/ChatThreadScreen.tsx"
+          "frontend/src/screens/AuthScreen.tsx",
+          "frontend/src/screens/ChatListScreen.tsx",
+          "frontend/src/screens/ChatThreadScreen.tsx",
+          "frontend/src/screens/SettingsScreen.tsx"
         ]
       },
       {
-        "id": "REQ-8",
-        "summary": "Add backend support for 1:1 call signaling and call session tracking (offer/answer/ICE candidates and basic call state) so two Whatchat users can establish a WebRTC connection without external services.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-9",
-        "summary": "Add React Query hooks and UI refresh behavior for call signaling that works without real-time transport, using manual refresh and/or short-interval polling while the call UI is open.",
+        "id": "REQ-21",
+        "summary": "Ensure the existing “Switch account” / sign-out flow continues to work correctly with auto-login: signing out must clear any locally-stored “last account” indicators used by the UI and must not immediately auto-redirect the user back into /chats unless they explicitly sign in again.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/backend.d.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/CallModal.tsx"
+          "frontend/src/hooks/useSignOut.ts",
+          "frontend/src/screens/AuthScreen.tsx",
+          "frontend/src/utils/authBootstrap.ts"
         ],
         "matchedFiles": [
-          "frontend/src/backend.d.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/CallModal.tsx"
+          "frontend/src/hooks/useSignOut.ts",
+          "frontend/src/screens/AuthScreen.tsx",
+          "frontend/src/utils/authBootstrap.ts"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
-    "build-template/README.md",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/camera/useCamera.ts",
-    "frontend/src/components/CallModal.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/hooks/useWebRTCCall.ts",
+    "frontend/src/hooks/useSignOut.ts",
+    "frontend/src/screens/AuthScreen.tsx",
+    "frontend/src/screens/ChatListScreen.tsx",
     "frontend/src/screens/ChatThreadScreen.tsx",
+    "frontend/src/screens/SettingsScreen.tsx",
+    "frontend/src/utils/authBootstrap.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

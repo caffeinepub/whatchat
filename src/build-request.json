@@ -1,94 +1,72 @@
 {
   "kind": "build_request",
-  "title": "Add voice call and video call options to Whatchat (non-real-time signaling)",
+  "title": "Auto-login the last used account on app open",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-6",
-      "text": "Add voice call and video call actions in the 1:1 chat thread UI so a user can start a voice or video call with the other participant in the conversation.",
+      "id": "REQ-19",
+      "text": "Implement an automatic sign-in restore flow so that when the app loads and an Internet Identity session/delegation already exists in the browser, the user is automatically taken into the app without needing to click “Sign In with Internet Identity”.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-20"
+          "msg-user-1"
         ],
         "quotes": [
-          "Ass video call and voice call options"
+          "Add auto login last  acount"
         ]
       },
       "acceptanceCriteria": [
-        "In ChatThreadScreen, the header shows two distinct actions: “Voice call” and “Video call” (icons acceptable).",
-        "If the app cannot determine the recipient principal from the conversationId, the call actions are disabled and show an error toast/message on click (English).",
-        "Clicking either action opens a call UI (modal or full-screen) that clearly indicates call type (Voice/Video) and the contact identifier (at minimum, the other principal)."
+        "When a previously authenticated user revisits/reloads the app and their Internet Identity session is still valid, they are automatically redirected to /chats.",
+        "The Auth screen does not require any user interaction to continue when a valid session exists.",
+        "If no valid session exists, the Auth screen remains available and the user can sign in normally."
       ]
     },
     {
-      "id": "REQ-7",
-      "text": "Implement an MVP call experience using WebRTC in the browser with controls for starting, accepting, ending, and handling permission errors for microphone/camera.",
+      "id": "REQ-20",
+      "text": "Prevent confusing Auth-screen UI flicker during initial authentication bootstrapping by showing an explicit initialization/loading state until the Internet Identity provider finishes determining whether a session is already authenticated.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-20"
+          "msg-user-1"
         ],
         "quotes": [
-          "Ass video call and voice call options"
+          "Add auto login last  acount"
         ]
       },
       "acceptanceCriteria": [
-        "Starting a voice call requests microphone permission; starting a video call requests camera + microphone permissions.",
-        "If permission is denied or no device is available, show a clear English error state and allow the user to close the call UI without breaking chat.",
-        "The call UI provides at least: End call button; mute/unmute for voice and video calls; camera on/off for video calls.",
-        "When a call is ended locally, the UI exits back to the chat thread and cleans up media tracks/peer connection."
+        "On a cold load, the app shows a clear loading state (English text) while authentication status is 'initializing'.",
+        "The “Sign In with Internet Identity” call-to-action is not shown as the primary action while the app is still determining whether an existing session is present.",
+        "Once initialization completes: (a) if authenticated, user is routed into /chats; (b) if not authenticated, the normal sign-in UI is shown."
       ]
     },
     {
-      "id": "REQ-8",
-      "text": "Add backend support for 1:1 call signaling and call session tracking (offer/answer/ICE candidates and basic call state) so two Whatchat users can establish a WebRTC connection without external services.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-20"
-        ],
-        "quotes": [
-          "Ass video call and voice call options"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Backend exposes call-related APIs to: create/start a call to a receiver principal; fetch call session state by session id; post SDP offer/answer; post ICE candidates; end a call.",
-        "All call APIs enforce that only authenticated users with #user permission can access them, and only call participants can read/write signaling data for that call.",
-        "Call session data is scoped to exactly two participants (1:1) and cannot be read by other principals.",
-        "The backend returns clear error traps/messages for unauthorized access, missing sessions, or invalid participant actions."
-      ]
-    },
-    {
-      "id": "REQ-9",
-      "text": "Add React Query hooks and UI refresh behavior for call signaling that works without real-time transport, using manual refresh and/or short-interval polling while the call UI is open.",
+      "id": "REQ-21",
+      "text": "Ensure the existing “Switch account” / sign-out flow continues to work correctly with auto-login: signing out must clear any locally-stored “last account” indicators used by the UI and must not immediately auto-redirect the user back into /chats unless they explicitly sign in again.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-20"
+          "msg-user-1"
         ],
         "quotes": [
-          "Ass video call and voice call options"
+          "Add auto login last  acount"
         ]
       },
       "acceptanceCriteria": [
-        "New hooks exist in frontend/src/hooks/useQueries.ts for the call signaling operations (create/start, get session, post offer/answer/candidates, end).",
-        "While the call UI is open, the app periodically checks for updated signaling/call state (polling) or provides a visible “Refresh” control to progress the call; at least one of these is implemented so calls can connect without WebSockets.",
-        "Polling/refresh stops when the call ends or the user closes the call UI.",
-        "User-facing text explains that calling may take a moment because it is not real-time (English)."
+        "After using “Switch account”, the app remains on the Auth screen and does not automatically re-enter /chats without an explicit new sign-in.",
+        "Any frontend-persisted “last account” UI hint (if introduced) is cleared on sign-out along with existing auth/query clearing behavior.",
+        "Reloading immediately after sign-out does not auto-login the signed-out user."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor with all logic in backend/main.mo; only add backend/migration.mo if an upgrade-safe state migration is truly required.",
-    "Do not edit files under frontend/src/components/ui or any paths listed as immutable in SYSTEM_CONTEXT.",
-    "Do not add WebSockets or any real-time chat/call transport; use request/response + polling/manual refresh only.",
-    "Use English for all user-facing text."
+    "Do not edit files under frontend/src/hooks/useInternetIdentity.ts or other paths listed as immutable in SYSTEM_CONTEXT.",
+    "Keep the backend as a single Motoko actor (no additional backend services).",
+    "Use English for any user-facing text."
   ],
   "nonGoals": [
-    "Group voice/video calls.",
-    "Call recording, call history, missed-call notifications, or push notifications.",
-    "Third-party calling/signaling services or external databases."
+    "Adding third-party authentication providers beyond Internet Identity.",
+    "Implementing true email verification or password-based authentication.",
+    "Adding real-time transport (e.g., WebSockets) for login state."
   ],
   "imageRequirements": {
     "required": [],

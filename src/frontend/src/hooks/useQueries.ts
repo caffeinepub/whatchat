@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
 import { Principal } from '@dfinity/principal';
+import type { OfferResponse, AnswerResponse, CandidatesResponse, StatusResponse } from '../backend';
 
 // Local type definitions for chat functionality
 // These should match the backend types but are defined here since they're not in the generated interface
@@ -34,6 +35,11 @@ interface ExtendedActor {
   sendOffer: (callee: Principal, offer: string) => Promise<void>;
   sendAnswer: (callerPrincipal: Principal, answer: string) => Promise<void>;
   sendCandidate: (receiver: Principal, candidate: string) => Promise<void>;
+  fetchOffer: (callee: Principal) => Promise<OfferResponse>;
+  fetchAnswer: (callee: Principal) => Promise<AnswerResponse>;
+  fetchCandidates: (callee: Principal) => Promise<CandidatesResponse>;
+  fetchStatus: (callee: Principal) => Promise<StatusResponse>;
+  clearCallState: (participant1: Principal, participant2: Principal) => Promise<void>;
 }
 
 export function useGetCallerUserProfile() {
@@ -210,7 +216,7 @@ export function useGetDevDocumentationUrl() {
   });
 }
 
-// Call signaling hooks
+// Call signaling mutation hooks
 export function useSendCallOffer() {
   const { actor } = useActor();
 
@@ -253,5 +259,85 @@ export function useSendCallCandidate() {
     onError: (error) => {
       console.error('Failed to send ICE candidate:', error);
     },
+  });
+}
+
+export function useClearCallState() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async ({ participant1, participant2 }: { participant1: Principal; participant2: Principal }) => {
+      if (!actor) throw new Error('Actor not available');
+      const extendedActor = actor as unknown as ExtendedActor;
+      await extendedActor.clearCallState(participant1, participant2);
+    },
+    onError: (error) => {
+      console.error('Failed to clear call state:', error);
+    },
+  });
+}
+
+// Call signaling fetch hooks (polling-based)
+export function useFetchCallOffer(callee: Principal | null, enabled: boolean = false) {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<OfferResponse>({
+    queryKey: ['callOffer', callee?.toText()],
+    queryFn: async () => {
+      if (!actor || !callee) throw new Error('Actor or callee not available');
+      const extendedActor = actor as unknown as ExtendedActor;
+      return extendedActor.fetchOffer(callee);
+    },
+    enabled: !!actor && !actorFetching && !!callee && enabled,
+    refetchInterval: enabled ? 2000 : false,
+    refetchIntervalInBackground: false,
+  });
+}
+
+export function useFetchCallAnswer(callee: Principal | null, enabled: boolean = false) {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<AnswerResponse>({
+    queryKey: ['callAnswer', callee?.toText()],
+    queryFn: async () => {
+      if (!actor || !callee) throw new Error('Actor or callee not available');
+      const extendedActor = actor as unknown as ExtendedActor;
+      return extendedActor.fetchAnswer(callee);
+    },
+    enabled: !!actor && !actorFetching && !!callee && enabled,
+    refetchInterval: enabled ? 2000 : false,
+    refetchIntervalInBackground: false,
+  });
+}
+
+export function useFetchCallCandidates(callee: Principal | null, enabled: boolean = false) {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<CandidatesResponse>({
+    queryKey: ['callCandidates', callee?.toText()],
+    queryFn: async () => {
+      if (!actor || !callee) throw new Error('Actor or callee not available');
+      const extendedActor = actor as unknown as ExtendedActor;
+      return extendedActor.fetchCandidates(callee);
+    },
+    enabled: !!actor && !actorFetching && !!callee && enabled,
+    refetchInterval: enabled ? 2000 : false,
+    refetchIntervalInBackground: false,
+  });
+}
+
+export function useFetchCallStatus(callee: Principal | null, enabled: boolean = false) {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<StatusResponse>({
+    queryKey: ['callStatus', callee?.toText()],
+    queryFn: async () => {
+      if (!actor || !callee) throw new Error('Actor or callee not available');
+      const extendedActor = actor as unknown as ExtendedActor;
+      return extendedActor.fetchStatus(callee);
+    },
+    enabled: !!actor && !actorFetching && !!callee && enabled,
+    refetchInterval: enabled ? 2000 : false,
+    refetchIntervalInBackground: false,
   });
 }

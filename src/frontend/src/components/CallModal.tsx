@@ -7,6 +7,7 @@ import { useWebRTCCall, CallType } from '../hooks/useWebRTCCall';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { useFetchCallOffer, useFetchCallAnswer, useFetchCallCandidates } from '../hooks/useQueries';
 
 interface CallModalProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export default function CallModal({
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const hasProcessedOffer = useRef(false);
   const hasCreatedOffer = useRef(false);
+  const processedCandidates = useRef<Set<string>>(new Set());
 
   const {
     localStream,
@@ -67,6 +69,22 @@ export default function CallModal({
       }
     },
   });
+
+  // Polling for call signaling (only when modal is open)
+  const { data: offerData, refetch: refetchOffer } = useFetchCallOffer(
+    recipientPrincipal,
+    isOpen && !isInitiator
+  );
+
+  const { data: answerData, refetch: refetchAnswer } = useFetchCallAnswer(
+    recipientPrincipal,
+    isOpen && isInitiator
+  );
+
+  const { data: candidatesData, refetch: refetchCandidates } = useFetchCallCandidates(
+    recipientPrincipal,
+    isOpen
+  );
 
   // Attach local stream to video element
   useEffect(() => {
@@ -98,6 +116,76 @@ export default function CallModal({
       peerConnection.removeEventListener('icecandidate', handleIceCandidate);
     };
   }, [peerConnection, onSendCandidate]);
+
+  // Auto-apply fetched offer (receiver side)
+  useEffect(() => {
+    if (!isOpen || isInitiator || !offerData || hasProcessedOffer.current) return;
+    if (offerData.state === 'no-offer' || !offerData.offer) return;
+
+    const applyOffer = async () => {
+      hasProcessedOffer.current = true;
+      try {
+        const offer = JSON.parse(offerData.offer!);
+        const answer = await createAnswer(offer);
+        if (answer && onSendAnswer) {
+          await onSendAnswer(JSON.stringify(answer));
+        } else {
+          setCallStatus('failed');
+        }
+      } catch (err) {
+        console.error('Error processing fetched offer:', err);
+        setCallStatus('failed');
+      }
+    };
+
+    applyOffer();
+  }, [isOpen, isInitiator, offerData, createAnswer, onSendAnswer]);
+
+  // Auto-apply fetched answer (initiator side)
+  useEffect(() => {
+    if (!isOpen || !isInitiator || !answerData || !peerConnection) return;
+    if (answerData.state === 'no-answer' || !answerData.answer) return;
+    if (peerConnection.remoteDescription) return; // Already set
+
+    const applyAnswer = async () => {
+      try {
+        const answer = JSON.parse(answerData.answer!);
+        await setRemoteDescription(answer);
+      } catch (err) {
+        console.error('Error applying fetched answer:', err);
+      }
+    };
+
+    applyAnswer();
+  }, [isOpen, isInitiator, answerData, peerConnection, setRemoteDescription]);
+
+  // Auto-apply fetched ICE candidates
+  useEffect(() => {
+    if (!isOpen || !candidatesData || !candidatesData.hasCandidates) return;
+    if (!peerConnection || !peerConnection.remoteDescription) return;
+
+    const applyCandidates = async () => {
+      for (const candidate of candidatesData.candidates) {
+        const candidateKey = `${candidate.sender.toText()}-${candidate.timestamp.toString()}-${candidate.candidate}`;
+        
+        // Skip if already processed
+        if (processedCandidates.current.has(candidateKey)) continue;
+        
+        // Only apply candidates from the other party
+        if (candidate.sender.toText() === recipientPrincipal.toText()) {
+          try {
+            const candidateObj = JSON.parse(candidate.candidate);
+            await addIceCandidate(candidateObj);
+            processedCandidates.current.add(candidateKey);
+          } catch (err) {
+            console.error('Error applying fetched ICE candidate:', err);
+          }
+        }
+      }
+    };
+
+    applyCandidates();
+  }, [isOpen, candidatesData, peerConnection, recipientPrincipal, addIceCandidate]);
 
   // Initialize media and start call flow
   useEffect(() => {
@@ -150,9 +238,18 @@ export default function CallModal({
     onClose();
   }, [cleanup, onClose]);
 
-  const handleRefresh = () => {
-    toast.info('Refreshing call state...');
-    // This would trigger a refetch in the parent component
+  const handleRefresh = async () => {
+    toast.info('Refreshing call signaling...');
+    try {
+      await Promise.all([
+        refetchOffer(),
+        refetchAnswer(),
+        refetchCandidates(),
+      ]);
+      toast.success('Call state refreshed');
+    } catch (error) {
+      toast.error('Failed to refresh call state');
+    }
   };
 
   const getStatusText = () => {
@@ -191,7 +288,7 @@ export default function CallModal({
         <Alert variant="default" className="bg-accent/50">
           <Info className="h-4 w-4" />
           <AlertDescription className="text-xs">
-            Calling may take a moment because it is not real-time. The connection is established through polling.
+            Call signaling auto-updates every 2 seconds. Connection may take a moment to establish.
           </AlertDescription>
         </Alert>
 
@@ -257,12 +354,10 @@ export default function CallModal({
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-16 h-16 rounded-full bg-muted-foreground/20 flex items-center justify-center mx-auto mb-4 animate-pulse">
-                    <Phone className="w-8 h-8 text-muted-foreground" />
+                  <div className="w-24 h-24 rounded-full bg-muted-foreground/20 flex items-center justify-center mx-auto mb-4">
+                    <Phone className="w-12 h-12 text-muted-foreground" />
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {callStatus === 'connecting' ? 'Waiting for connection...' : 'No remote stream'}
-                  </p>
+                  <p className="text-sm text-muted-foreground">Waiting for {recipientDisplay}...</p>
                 </div>
               </div>
             )}
@@ -278,18 +373,18 @@ export default function CallModal({
             variant="outline"
             size="icon"
             onClick={handleRefresh}
-            disabled={isInitializing || isEnding}
-            className="h-12 w-12"
+            className="rounded-full w-12 h-12"
+            title="Refresh call signaling"
           >
             <RefreshCw className="w-5 h-5" />
           </Button>
-
+          
           <Button
             variant={isMuted ? 'destructive' : 'outline'}
             size="icon"
             onClick={toggleMute}
-            disabled={isInitializing || isEnding || !localStream}
-            className="h-12 w-12"
+            disabled={isInitializing}
+            className="rounded-full w-12 h-12"
           >
             {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
           </Button>
@@ -299,8 +394,8 @@ export default function CallModal({
               variant={isCameraOff ? 'destructive' : 'outline'}
               size="icon"
               onClick={toggleCamera}
-              disabled={isInitializing || isEnding || !localStream}
-              className="h-12 w-12"
+              disabled={isInitializing}
+              className="rounded-full w-12 h-12"
             >
               {isCameraOff ? <VideoOff className="w-5 h-5" /> : <Video className="w-5 h-5" />}
             </Button>
@@ -311,7 +406,7 @@ export default function CallModal({
             size="icon"
             onClick={handleEndCall}
             disabled={isEnding}
-            className="h-14 w-14"
+            className="rounded-full w-14 h-14"
           >
             <PhoneOff className="w-6 h-6" />
           </Button>

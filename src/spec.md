@@ -1,12 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Add 1:1 voice and video calling to Whatchat using a non-real-time (polling/manual refresh) WebRTC signaling flow.
+**Goal:** Automatically restore an existing Internet Identity session on app load, routing returning users directly into the app while avoiding Auth-screen flicker.
 
 **Planned changes:**
-- Add “Voice call” and “Video call” actions to the 1:1 chat thread header, including disabled/error behavior when the recipient cannot be determined.
-- Implement a call UI (modal or full-screen) that shows call type and the other participant identifier, with controls to start/accept/end and handle permission/device errors.
-- Add backend call signaling/session APIs (create/start, get session, post offer/answer, post ICE candidates, end) with strict auth and participant-only access for 1:1 sessions.
-- Add React Query hooks for call signaling and implement polling and/or a visible manual refresh while the call UI is open; stop polling/refresh when the call ends/close, and explain that calling is not real-time.
+- Add an auth initialization/bootstrapping phase that checks for an existing Internet Identity session/delegation on startup.
+- If a valid session exists, automatically route the user to `/chats` without requiring a “Sign In with Internet Identity” click.
+- During initialization, show an explicit English loading/initializing state and avoid presenting “Sign In with Internet Identity” as the primary action until the session check completes.
+- Ensure “Switch account”/sign-out clears any frontend “last account” indicators and prevents immediate auto-login until the user explicitly signs in again.
 
-**User-visible outcome:** In a 1:1 chat, users can start a voice or video call, grant mic/camera permissions, and connect via a simple call screen that progresses via polling/refresh (no real-time signaling).
+**User-visible outcome:** Returning users with an active Internet Identity session are taken straight to `/chats` on app open; new/expired sessions see the normal Auth screen after a brief initializing state, and signing out keeps the user on the Auth screen until they choose to sign in.

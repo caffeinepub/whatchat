@@ -7,9 +7,7 @@ import Principal "mo:core/Principal";
 import List "mo:core/List";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
-import Migration "migration";
 
-(with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -87,6 +85,189 @@ actor {
 
   func isParticipant(conversation : Conversation, user : Principal) : Bool {
     conversation.participants.any(func(p : Principal) : Bool { p == user });
+  };
+
+  public type OfferResponse = {
+    state : Text;
+    offer : ?Text;
+    caller : ?Principal;
+  };
+
+  public type AnswerResponse = {
+    state : Text;
+    answer : ?Text;
+    callee : ?Principal;
+  };
+
+  public type CandidatesResponse = {
+    candidates : [Candidate];
+    hasCandidates : Bool;
+  };
+
+  public type StatusResponse = {
+    status : ?Text;
+    hasStatus : Bool;
+  };
+
+  // User Profile Management
+  public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view profiles");
+    };
+    userProfiles.get(caller);
+  };
+
+  public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
+    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only view your own profile");
+    };
+    userProfiles.get(user);
+  };
+
+  public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can save profiles");
+    };
+    userProfiles.add(caller, profile);
+  };
+
+  // WebRTC Call Signaling Endpoints
+  public query ({ caller }) func fetchOffer(callee : Principal) : async OfferResponse {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only users can fetch offers");
+    };
+
+    let callKey = getConversationId(callee, caller);
+
+    switch (calls.get(callKey)) {
+      case (null) {
+        {
+          state = "no-offer";
+          offer = null;
+          caller = null;
+        };
+      };
+      case (?call) {
+        // Verify caller is a participant in this call
+        if (call.status.caller != caller and call.status.callee != caller) {
+          Runtime.trap("Unauthorized: You are not a participant in this call");
+        };
+
+        switch (call.offer) {
+          case (null) {
+            {
+              state = "no-offer";
+              offer = null;
+              caller = null;
+            };
+          };
+          case (?offer) {
+            {
+              state = call.status.status;
+              offer = ?offer.offer;
+              caller = ?offer.caller;
+            };
+          };
+        };
+      };
+    };
+  };
+
+  public query ({ caller }) func fetchAnswer(callee : Principal) : async AnswerResponse {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only users can fetch answers");
+    };
+
+    let callKey = getConversationId(callee, caller);
+
+    switch (calls.get(callKey)) {
+      case (null) {
+        {
+          state = "no-answer";
+          answer = null;
+          callee = null;
+        };
+      };
+      case (?call) {
+        // Verify caller is a participant in this call
+        if (call.status.caller != caller and call.status.callee != caller) {
+          Runtime.trap("Unauthorized: You are not a participant in this call");
+        };
+
+        switch (call.answer) {
+          case (null) {
+            {
+              state = "no-answer";
+              answer = null;
+              callee = null;
+            };
+          };
+          case (?answer) {
+            {
+              state = call.status.status;
+              answer = ?answer.answer;
+              callee = ?answer.callee;
+            };
+          };
+        };
+      };
+    };
+  };
+
+  public query ({ caller }) func fetchCandidates(callee : Principal) : async CandidatesResponse {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only users can fetch candidates");
+    };
+
+    let callKey = getConversationId(callee, caller);
+
+    switch (calls.get(callKey)) {
+      case (null) {
+        { candidates = [] : [Candidate]; hasCandidates = false };
+      };
+      case (?call) {
+        // Verify caller is a participant in this call
+        if (call.status.caller != caller and call.status.callee != caller) {
+          Runtime.trap("Unauthorized: You are not a participant in this call");
+        };
+
+        if (call.candidates.isEmpty()) {
+          { candidates = [] : [Candidate]; hasCandidates = false };
+        } else {
+          switch (call.candidates.isEmpty()) {
+            case (true) { { candidates = [] : [Candidate]; hasCandidates = false } };
+            case (false) {
+              let candidateArray = call.candidates.toArray();
+              { candidates = candidateArray; hasCandidates = candidateArray.size() > 0 };
+            };
+          };
+        };
+      };
+    };
+  };
+
+  public query ({ caller }) func fetchStatus(callee : Principal) : async StatusResponse {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only users can fetch status");
+    };
+
+    let callKey = getConversationId(callee, caller);
+
+    switch (calls.get(callKey)) {
+      case (null) { { status = null; hasStatus = false } };
+      case (?call) {
+        // Verify caller is a participant in this call
+        if (call.status.caller != caller and call.status.callee != caller) {
+          Runtime.trap("Unauthorized: You are not a participant in this call");
+        };
+
+        if (call.status.status == "active") {
+          { status = null; hasStatus = false };
+        } else {
+          { status = ?call.status.status; hasStatus = true };
+        };
+      };
+    };
   };
 
   public shared ({ caller }) func sendOffer(callee : Principal, offer : Text) : async () {
@@ -198,5 +379,27 @@ actor {
         calls.add(callKey, updatedCall);
       };
     };
+  };
+
+  public shared ({ caller }) func clearCallState(participant1 : Principal, participant2 : Principal) : async () {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only users can clear call state");
+    };
+
+    let callKey = getConversationId(participant1, participant2);
+
+    // Verify caller is a participant in the call being cleared
+    switch (calls.get(callKey)) {
+      case (null) { 
+        // No call exists, nothing to clear - this is fine
+      };
+      case (?call) {
+        if (call.status.caller != caller and call.status.callee != caller) {
+          Runtime.trap("Unauthorized: You can only clear call state for calls you participated in");
+        };
+      };
+    };
+
+    calls.remove(callKey);
   };
 };

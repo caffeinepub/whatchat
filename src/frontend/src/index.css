@@ -96,3 +96,40 @@
         font-family: 'Courier New', Courier, monospace;
     }
 }
+
+@layer utilities {
+    /* Chat wallpaper background with theme-aware overlay */
+    .chat-wallpaper {
+        position: relative;
+    }
+    
+    .chat-wallpaper::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: url('/assets/generated/whatchat-wallpaper-light.dim_1440x2560.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        z-index: 0;
+    }
+    
+    .dark .chat-wallpaper::before {
+        background-image: url('/assets/generated/whatchat-wallpaper-dark.dim_1440x2560.png');
+    }
+    
+    /* Overlay to preserve readability */
+    .chat-wallpaper::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-color: oklch(var(--background) / 0.85);
+        z-index: 1;
+    }
+    
+    /* Content layer above wallpaper and overlay */
+    .chat-wallpaper-content {
+        position: relative;
+        z-index: 2;
+    }
+}

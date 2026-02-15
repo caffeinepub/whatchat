@@ -2,11 +2,13 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-voice-call-and-video-call-actions-in-the-1-1-chat-thread-ui-so-a-user-can-start-a-voice-or-video-call-with-the-other-participant-in-the-conversation",
-      "featureTitle": "Add voice call and video call actions in the 1:1 chat thread UI so a user can start a voice or video call with the other participant in the conversation.",
+      "featureId": "feature-implement-an-automatic-sign-in-restore-flow-so-that-when-the-app-loads-and-an-internet-identity-session-delegation-already-exists-in-the-browser-the-user-is-automatically-taken-into-the-app-without-needing-to-click-sign-in-with-internet-identity",
+      "featureTitle": "Implement an automatic sign-in restore flow so that when the app loads and an Internet Identity session/delegation already exists in the browser, the user is automatically taken into the app without needing to click “Sign In with Internet Identity”.",
       "files": [
-        "frontend/src/components/CallModal.tsx",
-        "frontend/src/screens/ChatThreadScreen.tsx"
+        "frontend/src/screens/AuthScreen.tsx",
+        "frontend/src/screens/ChatListScreen.tsx",
+        "frontend/src/screens/ChatThreadScreen.tsx",
+        "frontend/src/screens/SettingsScreen.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -18,17 +20,18 @@
         "camera@1.0.0"
       ],
       "testIds": [
-        "REQ-6"
+        "REQ-19"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-implement-an-mvp-call-experience-using-webrtc-in-the-browser-with-controls-for-starting-accepting-ending-and-handling-permission-errors-for-microphone-camera",
-      "featureTitle": "Implement an MVP call experience using WebRTC in the browser with controls for starting, accepting, ending, and handling permission errors for microphone/camera.",
+      "featureId": "feature-prevent-confusing-auth-screen-ui-flicker-during-initial-authentication-bootstrapping-by-showing-an-explicit-initialization-loading-state-until-the-internet-identity-provider-finishes-determining-whether-a-session-is-already-authenticated",
+      "featureTitle": "Prevent confusing Auth-screen UI flicker during initial authentication bootstrapping by showing an explicit initialization/loading state until the Internet Identity provider finishes determining whether a session is already authenticated.",
       "files": [
-        "frontend/src/components/CallModal.tsx",
-        "frontend/src/hooks/useWebRTCCall.ts",
-        "frontend/src/screens/ChatThreadScreen.tsx"
+        "frontend/src/screens/AuthScreen.tsx",
+        "frontend/src/screens/ChatListScreen.tsx",
+        "frontend/src/screens/ChatThreadScreen.tsx",
+        "frontend/src/screens/SettingsScreen.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -40,16 +43,17 @@
         "camera@1.0.0"
       ],
       "testIds": [
-        "REQ-7"
+        "REQ-20"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-react-query-hooks-and-ui-refresh-behavior-for-call-signaling-that-works-without-real-time-transport-using-manual-refresh-and-or-short-interval-polling-while-the-call-ui-is-open",
-      "featureTitle": "Add React Query hooks and UI refresh behavior for call signaling that works without real-time transport, using manual refresh and/or short-interval polling while the call UI is open.",
+      "featureId": "feature-ensure-the-existing-switch-account-sign-out-flow-continues-to-work-correctly-with-auto-login-signing-out-must-clear-any-locally-stored-last-account-indicators-used-by-the-ui-and-must-not-immediately-auto-redirect-the-user-back-into-chats-unless-they-explicitly-sign-in-again",
+      "featureTitle": "Ensure the existing “Switch account” / sign-out flow continues to work correctly with auto-login: signing out must clear any locally-stored “last account” indicators used by the UI and must not immediately auto-redirect the user back into /chats unless they explicitly sign in again.",
       "files": [
-        "frontend/src/components/CallModal.tsx",
-        "frontend/src/hooks/useQueries.ts"
+        "frontend/src/hooks/useSignOut.ts",
+        "frontend/src/screens/AuthScreen.tsx",
+        "frontend/src/utils/authBootstrap.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -61,7 +65,7 @@
         "camera@1.0.0"
       ],
       "testIds": [
-        "REQ-9"
+        "REQ-21"
       ],
       "confidence": "high"
     }

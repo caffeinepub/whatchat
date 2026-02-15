@@ -13,12 +13,56 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const AnswerResponse = IDL.Record({
+  'answer' : IDL.Opt(IDL.Text),
+  'state' : IDL.Text,
+  'callee' : IDL.Opt(IDL.Principal),
+});
+export const Candidate = IDL.Record({
+  'sender' : IDL.Principal,
+  'timestamp' : IDL.Int,
+  'candidate' : IDL.Text,
+  'receiver' : IDL.Principal,
+});
+export const CandidatesResponse = IDL.Record({
+  'hasCandidates' : IDL.Bool,
+  'candidates' : IDL.Vec(Candidate),
+});
+export const OfferResponse = IDL.Record({
+  'offer' : IDL.Opt(IDL.Text),
+  'state' : IDL.Text,
+  'caller' : IDL.Opt(IDL.Principal),
+});
+export const StatusResponse = IDL.Record({
+  'status' : IDL.Opt(IDL.Text),
+  'hasStatus' : IDL.Bool,
+});
+export const UserProfile = IDL.Record({
+  'name' : IDL.Text,
+  'email' : IDL.Text,
+});
 
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'clearCallState' : IDL.Func([IDL.Principal, IDL.Principal], [], []),
+  'fetchAnswer' : IDL.Func([IDL.Principal], [AnswerResponse], ['query']),
+  'fetchCandidates' : IDL.Func(
+      [IDL.Principal],
+      [CandidatesResponse],
+      ['query'],
+    ),
+  'fetchOffer' : IDL.Func([IDL.Principal], [OfferResponse], ['query']),
+  'fetchStatus' : IDL.Func([IDL.Principal], [StatusResponse], ['query']),
+  'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getUserProfile' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Opt(UserProfile)],
+      ['query'],
+    ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'sendAnswer' : IDL.Func([IDL.Principal, IDL.Text], [], []),
   'sendCandidate' : IDL.Func([IDL.Principal, IDL.Text], [], []),
   'sendOffer' : IDL.Func([IDL.Principal, IDL.Text], [], []),
@@ -32,12 +76,53 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
+  const AnswerResponse = IDL.Record({
+    'answer' : IDL.Opt(IDL.Text),
+    'state' : IDL.Text,
+    'callee' : IDL.Opt(IDL.Principal),
+  });
+  const Candidate = IDL.Record({
+    'sender' : IDL.Principal,
+    'timestamp' : IDL.Int,
+    'candidate' : IDL.Text,
+    'receiver' : IDL.Principal,
+  });
+  const CandidatesResponse = IDL.Record({
+    'hasCandidates' : IDL.Bool,
+    'candidates' : IDL.Vec(Candidate),
+  });
+  const OfferResponse = IDL.Record({
+    'offer' : IDL.Opt(IDL.Text),
+    'state' : IDL.Text,
+    'caller' : IDL.Opt(IDL.Principal),
+  });
+  const StatusResponse = IDL.Record({
+    'status' : IDL.Opt(IDL.Text),
+    'hasStatus' : IDL.Bool,
+  });
+  const UserProfile = IDL.Record({ 'name' : IDL.Text, 'email' : IDL.Text });
   
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'clearCallState' : IDL.Func([IDL.Principal, IDL.Principal], [], []),
+    'fetchAnswer' : IDL.Func([IDL.Principal], [AnswerResponse], ['query']),
+    'fetchCandidates' : IDL.Func(
+        [IDL.Principal],
+        [CandidatesResponse],
+        ['query'],
+      ),
+    'fetchOffer' : IDL.Func([IDL.Principal], [OfferResponse], ['query']),
+    'fetchStatus' : IDL.Func([IDL.Principal], [StatusResponse], ['query']),
+    'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getUserProfile' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Opt(UserProfile)],
+        ['query'],
+      ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'sendAnswer' : IDL.Func([IDL.Principal, IDL.Text], [], []),
     'sendCandidate' : IDL.Func([IDL.Principal, IDL.Text], [], []),
     'sendOffer' : IDL.Func([IDL.Principal, IDL.Text], [], []),

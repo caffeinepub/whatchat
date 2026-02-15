@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useGetConversationIds, useGetCallerUserProfile } from '../hooks/useQueries';
+import { useGetConversationIds, useGetCallerUserProfile, useGetUnreadMessageCount } from '../hooks/useQueries';
+import { usePollingRefetch } from '../hooks/usePollingRefetch';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, RefreshCw, MessageCircle } from 'lucide-react';
+import { Plus, RefreshCw, MessageCircle, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,17 +16,28 @@ import { Info } from 'lucide-react';
 
 export default function ChatListScreen() {
   const navigate = useNavigate();
-  const { identity } = useInternetIdentity();
-  const { data: conversationIds, refetch, isLoading } = useGetConversationIds();
+  const { identity, isInitializing } = useInternetIdentity();
+  const { data: conversationIds, refetch: refetchConversations, isLoading } = useGetConversationIds();
+  const { refetch: refetchUnreadCount } = useGetUnreadMessageCount();
   const { data: userProfile } = useGetCallerUserProfile();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [recipientPrincipal, setRecipientPrincipal] = useState('');
 
   useEffect(() => {
-    if (!identity) {
+    if (!identity && !isInitializing) {
       navigate({ to: '/' });
     }
-  }, [identity, navigate]);
+  }, [identity, isInitializing, navigate]);
+
+  // Auto-refresh polling for conversation list and unread count
+  usePollingRefetch({
+    enabled: !!identity,
+    interval: 3000,
+    onRefetch: () => {
+      refetchConversations();
+      refetchUnreadCount();
+    },
+  });
 
   const handleStartChat = () => {
     if (!recipientPrincipal.trim()) {
@@ -56,12 +68,25 @@ export default function ChatListScreen() {
 
   const handleRefresh = async () => {
     try {
-      await refetch();
+      await refetchConversations();
+      await refetchUnreadCount();
       toast.success('Conversations refreshed');
     } catch (error) {
       toast.error('Failed to refresh conversations');
     }
   };
+
+  // Show loading state while auth is initializing
+  if (isInitializing) {
+    return (
+      <div className="h-full flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
+          <p className="text-lg text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!identity) {
     return null;
@@ -93,7 +118,7 @@ export default function ChatListScreen() {
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription className="text-xs">
-                      Messages are not real-time. Tap the Refresh button to check for new messages.
+                      Chats auto-update while viewing this screen. You can also tap Refresh for an immediate update.
                     </AlertDescription>
                   </Alert>
                   <div className="space-y-2">
@@ -119,8 +144,8 @@ export default function ChatListScreen() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="container mx-auto px-4 py-4">
+      <div className="flex-1 overflow-y-auto chat-wallpaper">
+        <div className="container mx-auto px-4 py-4 chat-wallpaper-content">
           {isLoading ? (
             <div className="text-center py-12 text-muted-foreground">Loading conversations...</div>
           ) : conversationIds && conversationIds.length > 0 ? (

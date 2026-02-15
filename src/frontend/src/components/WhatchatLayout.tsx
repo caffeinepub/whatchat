@@ -2,26 +2,30 @@ import { MessageCircle, Settings, LogOut } from 'lucide-react';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { Button } from '@/components/ui/button';
-import { useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { useGetUnreadMessageCount } from '../hooks/useQueries';
+import { useSignOut } from '../hooks/useSignOut';
+import { usePollingRefetch } from '../hooks/usePollingRefetch';
 
 export default function WhatchatLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const { identity, clear } = useInternetIdentity();
-  const queryClient = useQueryClient();
+  const { identity } = useInternetIdentity();
+  const { signOut } = useSignOut();
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
   const isAuthenticated = !!identity;
 
-  const { data: unreadCount } = useGetUnreadMessageCount();
+  const { data: unreadCount, refetch: refetchUnreadCount } = useGetUnreadMessageCount();
   const unreadNumber = unreadCount ? Number(unreadCount) : 0;
 
-  const handleLogout = async () => {
-    await clear();
-    queryClient.clear();
-    navigate({ to: '/' });
-  };
+  // Auto-refresh unread count while authenticated
+  usePollingRefetch({
+    enabled: isAuthenticated,
+    interval: 3000,
+    onRefetch: () => {
+      refetchUnreadCount();
+    },
+  });
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -45,7 +49,7 @@ export default function WhatchatLayout({ children }: { children: React.ReactNode
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={handleLogout}
+                onClick={signOut}
                 className="text-primary-foreground hover:bg-primary/90"
               >
                 <LogOut className="w-5 h-5" />

@@ -1,80 +1,93 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Whatchat: MVP 1:1 Voice/Video Calling UI (WebRTC + polling signaling)",
+  "title": "Auto-restore Internet Identity session on load (no flicker)",
   "requirements": [
     {
-      "id": "REQ-6",
-      "summary": "Add Voice call and Video call actions to the 1:1 chat thread header and open a call UI showing call type and recipient identifier.",
+      "id": "REQ-19",
+      "summary": "Auto-restore an existing Internet Identity session on app load and route authenticated users directly into /chats without requiring a manual sign-in click.",
       "acceptanceCriteria": [
-        "In ChatThreadScreen, the header shows two distinct actions: “Voice call” and “Video call” (icons acceptable).",
-        "If the app cannot determine the recipient principal from the conversationId, the call actions are disabled and show an error toast/message on click (English).",
-        "Clicking either action opens a call UI (modal or full-screen) that clearly indicates call type (Voice/Video) and the contact identifier (at minimum, the other principal)."
+        "When a previously authenticated user revisits/reloads the app and their Internet Identity session is still valid, they are automatically redirected to /chats.",
+        "The Auth screen does not require any user interaction to continue when a valid session exists.",
+        "If no valid session exists, the Auth screen remains available and the user can sign in normally."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/screens/ChatThreadScreen.tsx",
+          "path": "frontend/src/screens/AuthScreen.tsx",
           "operation": "modify",
-          "description": "Add two distinct header actions (Voice call / Video call) using existing UI primitives, resolve the other participant principal from conversationId, disable actions when recipient cannot be determined, and show an English toast on click when disabled; wire actions to open the new Call UI and pass call type + recipient principal identifier. Verify the component's usage instructions before implementing."
+          "description": "Use the existing Internet Identity auth state (from useInternetIdentity) to automatically navigate to /chats once initialization completes and a valid identity is present; ensure this redirect is gated by an explicit “initializing” state and a one-time sign-out override flag. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/CallModal.tsx",
-          "operation": "create",
-          "description": "Create a call UI (modal) that receives call type (voice/video) and recipient principal identifier and renders clear labels for both; expose callbacks for closing/ending the call so ChatThreadScreen can exit cleanly back to the thread. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "summary": "Implement an MVP in-browser WebRTC call experience with start/accept/end controls, mute/camera toggles, and permission error handling with proper cleanup.",
-      "acceptanceCriteria": [
-        "Starting a voice call requests microphone permission; starting a video call requests camera + microphone permissions.",
-        "If permission is denied or no device is available, show a clear English error state and allow the user to close the call UI without breaking chat.",
-        "The call UI provides at least: End call button; mute/unmute for voice and video calls; camera on/off for video calls.",
-        "When a call is ended locally, the UI exits back to the chat thread and cleans up media tracks/peer connection."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/CallModal.tsx",
+          "path": "frontend/src/screens/ChatListScreen.tsx",
           "operation": "modify",
-          "description": "Implement WebRTC peer connection lifecycle inside the call UI: request getUserMedia based on call type (mic only vs mic+camera), render local/remote media (at minimum audio; include video elements for video calls), provide controls for End, Mute/Unmute, and Camera On/Off (video calls), show English permission/device error states, and ensure cleanup of MediaStreams/tracks and RTCPeerConnection on end/close/unmount (returning user to chat thread without side effects). Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/useWebRTCCall.ts",
-          "operation": "create",
-          "description": "Add a reusable hook to manage WebRTC state for the call UI (peer connection creation, local track enable/disable for mute/camera toggle, attaching remote tracks, teardown/cleanup, and surfacing permission/device errors in English). Verify the component's usage instructions before implementing."
+          "description": "Prevent redirect-to-auth during Internet Identity bootstrapping by delaying unauthenticated redirects until initialization is finished; keep the screen inert (or show a loading state) while auth is still initializing. Verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/screens/ChatThreadScreen.tsx",
           "operation": "modify",
-          "description": "Ensure ending/closing the call UI returns focus to the chat thread view and that any open-call polling/signaling work is stopped when the call UI is closed. Verify the component's usage instructions before implementing."
+          "description": "Prevent redirect-to-auth during Internet Identity bootstrapping by delaying unauthenticated redirects until initialization is finished; keep the screen inert (or show a loading state) while auth is still initializing. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/screens/SettingsScreen.tsx",
+          "operation": "modify",
+          "description": "Prevent redirect-to-auth during Internet Identity bootstrapping by delaying unauthenticated redirects until initialization is finished; keep the screen inert (or show a loading state) while auth is still initializing. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
-      "id": "REQ-9",
-      "summary": "Add React Query hooks for call signaling and implement polling/manual refresh behavior while the call UI is open (non-real-time).",
+      "id": "REQ-20",
+      "summary": "Show an explicit initialization/loading state during initial authentication bootstrapping to avoid Auth-screen UI flicker.",
       "acceptanceCriteria": [
-        "New hooks exist in frontend/src/hooks/useQueries.ts for the call signaling operations (create/start, get session, post offer/answer/candidates, end).",
-        "While the call UI is open, the app periodically checks for updated signaling/call state (polling) or provides a visible “Refresh” control to progress the call; at least one of these is implemented so calls can connect without WebSockets.",
-        "Polling/refresh stops when the call ends or the user closes the call UI.",
-        "User-facing text explains that calling may take a moment because it is not real-time (English)."
+        "On a cold load, the app shows a clear loading state (English text) while authentication status is 'initializing'.",
+        "The “Sign In with Internet Identity” call-to-action is not shown as the primary action while the app is still determining whether an existing session is present.",
+        "Once initialization completes: (a) if authenticated, user is routed into /chats; (b) if not authenticated, the normal sign-in UI is shown."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/backend.d.ts",
+          "path": "frontend/src/screens/AuthScreen.tsx",
           "operation": "modify",
-          "description": "Update the frontend backend interface typings to include the call signaling operations required by the app (create/start call, fetch call session state, post offer/answer/ICE candidates, end call) so new React Query hooks can be typed correctly. Verify the component's usage instructions before implementing."
+          "description": "Render a dedicated 'Initializing authentication…' loading view while useInternetIdentity reports isInitializing; only show the normal 'Sign In with Internet Identity' CTA after initialization completes and the user is not authenticated. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/hooks/useQueries.ts",
+          "path": "frontend/src/screens/ChatListScreen.tsx",
           "operation": "modify",
-          "description": "Add new React Query hooks for call signaling (create/start, get session with optional polling, send offer/answer/candidate, end call). Hooks should depend on the actor from useActor, use English error handling patterns consistent with existing hooks, and support enabling/disabling polling while the call UI is open. Verify the component's usage instructions before implementing."
+          "description": "Add a small loading state (English text) when auth is initializing to avoid brief flashes/redirect loops during cold loads. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/CallModal.tsx",
+          "path": "frontend/src/screens/ChatThreadScreen.tsx",
           "operation": "modify",
-          "description": "Wire call signaling hooks into the call UI: start call flow (create/start + send offer), accept flow (send answer), ICE candidate exchange, and add either short-interval polling while open (preferred) and/or a visible 'Refresh' control; ensure polling/refresh is stopped on end/close; include English helper text explaining calling may take a moment because it is not real-time. Verify the component's usage instructions before implementing."
+          "description": "Add a small loading state (English text) when auth is initializing to avoid brief flashes/redirect loops during cold loads. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/screens/SettingsScreen.tsx",
+          "operation": "modify",
+          "description": "Add a small loading state (English text) when auth is initializing to avoid brief flashes/redirect loops during cold loads. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-21",
+      "summary": "Keep “Switch account” (sign-out) working correctly with auto-login by clearing any frontend auto-login hints and preventing immediate re-entry into /chats until the user explicitly signs in again.",
+      "acceptanceCriteria": [
+        "After using “Switch account”, the app remains on the Auth screen and does not automatically re-enter /chats without an explicit new sign-in.",
+        "Any frontend-persisted “last account” UI hint (if introduced) is cleared on sign-out along with existing auth/query clearing behavior.",
+        "Reloading immediately after sign-out does not auto-login the signed-out user."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useSignOut.ts",
+          "operation": "modify",
+          "description": "Before clearing identity and react-query cache, persist a one-time 'skip auto-login/redirect' marker (sessionStorage) so the UI won’t immediately navigate back into /chats after sign-out; keep existing query clearing + navigation to '/'. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/screens/AuthScreen.tsx",
+          "operation": "modify",
+          "description": "Respect the one-time 'skip auto-login/redirect' marker: do not auto-navigate to /chats while it is set; clear the marker only when the user explicitly clicks the sign-in button (wrapping login()) or after a successful explicit sign-in. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/utils/authBootstrap.ts",
+          "operation": "create",
+          "description": "Add small helper utilities for setting/clearing/reading the sessionStorage one-time 'skip auto-login/redirect' marker used by sign-out and the Auth screen to prevent unintended auto-redirect. Verify the component's usage instructions before implementing."
         }
       ]
     }

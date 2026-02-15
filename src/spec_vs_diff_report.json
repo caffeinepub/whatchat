@@ -1,71 +1,29 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-15T08:45:54.594Z",
-  "summary": "Diff adds WebRTC UI pieces (CallModal + useWebRTCCall) and basic backend call signaling methods (sendOffer/sendAnswer/likely sendCandidate). However, several required backend/session APIs and the non-real-time polling/refresh signaling flow are not clearly implemented in the shown changes, and some REQ-6/REQ-7 acceptance details cannot be confirmed from the truncated diffs.",
-  "missing_requirements": [
-    {
-      "id": "REQ-6",
-      "requirement": "In ChatThreadScreen, call actions are disabled when the recipient principal cannot be determined from conversationId, and clicking them shows an English error message.",
-      "reason": "ChatThreadScreen shows an error toast when recipient cannot be determined, but the diff does not show the header buttons being disabled in that state (only on-click guarding is visible in the truncated snippet).",
-      "evidence": [
-        "frontend/src/screens/ChatThreadScreen.tsx"
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "requirement": "Call UI supports accepting calls (callee flow) and provides a clear permission/device error state that still allows closing without breaking chat; end-call exits back to thread and cleans up tracks/peer connection.",
-      "reason": "CallModal/useWebRTCCall implement media initialization and offer/answer creation, but the diff is truncated before showing full accept/end/cleanup UI behavior and explicit cleanup-on-close/end; cannot confirm acceptance handling, end-call navigation/exit behavior, and cleanup are fully wired.",
-      "evidence": [
-        "frontend/src/components/CallModal.tsx",
-        "frontend/src/hooks/useWebRTCCall.ts"
-      ]
-    },
-    {
-      "id": "REQ-8",
-      "requirement": "Backend exposes call APIs to create/start a call, fetch call session state by session id, post SDP offer/answer, post ICE candidates, and end a call.",
-      "reason": "backend/main.mo shows sendOffer and sendAnswer and defines candidates/status storage, but the diff does not show an API to fetch call session state by session id, nor an end-call API, nor a session-id-based model (it appears keyed by conversation-derived callKey instead).",
-      "evidence": [
-        "backend/main.mo"
-      ]
-    },
-    {
-      "id": "REQ-8",
-      "requirement": "All call APIs enforce that only authenticated users with #user permission can access them, and only call participants can read/write signaling data for that call; backend returns clear errors for unauthorized, missing sessions, invalid participant actions.",
-      "reason": "sendOffer/sendAnswer include #user permission checks and some participant validation, but the diff is truncated and does not show enforcement for ICE candidate posting and any read/get-state methods (which are not shown). Also missing explicit session read API makes participant-scoped read enforcement unverifiable.",
-      "evidence": [
-        "backend/main.mo"
-      ]
-    },
-    {
-      "id": "REQ-9",
-      "requirement": "Add React Query hooks in frontend/src/hooks/useQueries.ts for create/start, get session, post offer/answer/candidates, and end; while call UI is open, use polling or a visible Refresh control to progress signaling; stop polling/refresh when closed/ended; include English text explaining non-real-time nature.",
-      "reason": "useQueries.ts shows actor methods sendOffer/sendAnswer/sendCandidate in the extended interface, and ChatThread imports useSendCallOffer, but the diff is truncated before showing the actual new hooks for get-session/end-call and any polling/refresh behavior tied to CallModal. CallModal imports a Refresh icon, but the snippet doesn’t show a refresh button wired to backend get-session polling/refresh, nor the required explanatory UX copy about non-real-time signaling.",
-      "evidence": [
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/screens/ChatThreadScreen.tsx",
-        "frontend/src/components/CallModal.tsx"
-      ]
-    }
-  ],
+  "generatedAt": "2026-02-15T09:39:41.101Z",
+  "summary": "Diff implements an auth bootstrapping UX with an explicit initializing/loading state on the Auth screen, automatic navigation to /chats when an existing identity is present, and a sessionStorage-based “skip auto-login” marker set on sign-out to prevent immediate re-entry until the user explicitly signs in again.",
+  "missing_requirements": [],
   "hallucinated_features": [
     {
-      "description": "Use of Google STUN servers (stun.l.google.com) for ICE configuration.",
-      "reason": "BuildRequest forbids “Third-party calling/signaling services.” The diff configures external STUN servers, which may be interpreted as a third-party service dependency beyond the requested backend-only signaling.",
+      "description": "Added initializing/loading state gating on non-Auth screens (ChatList, ChatThread, Settings) to show spinners and suppress redirects while auth is initializing.",
+      "reason": "REQ-20 only specifies preventing Auth-screen flicker during initialization; it does not require adding initialization loading UI to other screens.",
       "evidence": [
-        "frontend/src/hooks/useWebRTCCall.ts"
+        "frontend/src/screens/ChatListScreen.tsx",
+        "frontend/src/screens/ChatThreadScreen.tsx",
+        "frontend/src/screens/SettingsScreen.tsx"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.66,
   "changed_files": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/CallModal.tsx",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/hooks/useWebRTCCall.ts",
+    "frontend/src/hooks/useSignOut.ts",
+    "frontend/src/screens/AuthScreen.tsx",
+    "frontend/src/screens/ChatListScreen.tsx",
     "frontend/src/screens/ChatThreadScreen.tsx",
+    "frontend/src/screens/SettingsScreen.tsx",
+    "frontend/src/utils/authBootstrap.ts",
     "project_state.json"
   ]
 }

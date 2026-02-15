@@ -6,27 +6,41 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Copy, User, Mail, Key } from 'lucide-react';
+import { Copy, User, Mail, Key, LogOut, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import DeveloperInfoCard from '../components/DeveloperInfoCard';
 import { Separator } from '@/components/ui/separator';
+import { useSignOut } from '../hooks/useSignOut';
 
 export default function SettingsScreen() {
   const navigate = useNavigate();
-  const { identity } = useInternetIdentity();
+  const { identity, isInitializing } = useInternetIdentity();
   const { data: userProfile } = useGetCallerUserProfile();
+  const { signOut } = useSignOut();
   const principalId = identity?.getPrincipal().toText();
 
   useEffect(() => {
-    if (!identity) {
+    if (!identity && !isInitializing) {
       navigate({ to: '/' });
     }
-  }, [identity, navigate]);
+  }, [identity, isInitializing, navigate]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success('Copied to clipboard!');
   };
+
+  // Show loading state while auth is initializing
+  if (isInitializing) {
+    return (
+      <div className="h-full flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
+          <p className="text-lg text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!identity) {
     return null;
@@ -92,6 +106,25 @@ export default function SettingsScreen() {
                 This is your unique identifier on the Internet Computer. Share it with contacts so they can message you.
               </p>
             </div>
+          </CardContent>
+        </Card>
+
+        <Separator />
+
+        {/* Account Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Actions</CardTitle>
+            <CardDescription>Manage your account</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" onClick={signOut} className="w-full sm:w-auto flex items-center gap-2">
+              <LogOut className="w-4 h-4" />
+              Switch account
+            </Button>
+            <p className="text-xs text-muted-foreground mt-2">
+              Sign out and log in with a different Internet Identity
+            </p>
           </CardContent>
         </Card>
 

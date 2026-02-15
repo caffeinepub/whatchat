@@ -10,14 +10,47 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface AnswerResponse {
+  'answer' : [] | [string],
+  'state' : string,
+  'callee' : [] | [Principal],
+}
+export interface Candidate {
+  'sender' : Principal,
+  'timestamp' : bigint,
+  'candidate' : string,
+  'receiver' : Principal,
+}
+export interface CandidatesResponse {
+  'hasCandidates' : boolean,
+  'candidates' : Array<Candidate>,
+}
+export interface OfferResponse {
+  'offer' : [] | [string],
+  'state' : string,
+  'caller' : [] | [Principal],
+}
+export interface StatusResponse {
+  'status' : [] | [string],
+  'hasStatus' : boolean,
+}
+export interface UserProfile { 'name' : string, 'email' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
 export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'clearCallState' : ActorMethod<[Principal, Principal], undefined>,
+  'fetchAnswer' : ActorMethod<[Principal], AnswerResponse>,
+  'fetchCandidates' : ActorMethod<[Principal], CandidatesResponse>,
+  'fetchOffer' : ActorMethod<[Principal], OfferResponse>,
+  'fetchStatus' : ActorMethod<[Principal], StatusResponse>,
+  'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'sendAnswer' : ActorMethod<[Principal, string], undefined>,
   'sendCandidate' : ActorMethod<[Principal, string], undefined>,
   'sendOffer' : ActorMethod<[Principal, string], undefined>,

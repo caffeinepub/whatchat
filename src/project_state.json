@@ -1,8 +1,10 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 5,
+  "projectStateVersion": 15,
   "summary": "Build \"Whatchat\", a WhatsApp-like messaging app with email-based login (no phone number) and user access to the app/codebase so they can make changes.",
-  "architectural_notes": [],
+  "architectural_notes": [
+    "Persist and restore the last signed-in account/session so the app can auto-login on subsequent launches (with a clear way to switch accounts/log out)."
+  ],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
@@ -69,6 +71,94 @@
         "REQ-9"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-add-an-in-app-switch-account-option-that-signs-the-current-user-out-and-returns-them-to-the-authentication-screen-so-they-can-sign-in-with-a-different-internet-identity",
+      "title": "Add an in-app \"Switch account\" option that signs the current user out and returns them to the authentication screen so they can sign in with a different Internet Identity.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-existing-header-logout-action-and-the-new-switch-account-action-have-consistent-behavior-both-must-clear-auth-state-clear-react-query-cache-and-redirect-to-the-auth-screen-with-clear-english-ux-copy-e-g-optional-confirmation-dialog-or-toast",
+      "title": "Ensure the existing header logout action and the new \"Switch account\" action have consistent behavior: both must clear auth state, clear React Query cache, and redirect to the Auth screen, with clear English UX copy (e.g., optional confirmation dialog or toast).",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-online-chat-behavior-by-automatically-fetching-new-messages-and-conversation-updates-while-the-user-is-viewing-chats-so-users-no-longer-need-to-manually-press-refresh-to-see-new-messages",
+      "title": "Implement “online chat” behavior by automatically fetching new messages and conversation updates while the user is viewing chats, so users no longer need to manually press Refresh to see new messages.",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-user-facing-ux-copy-in-chats-and-chat-thread-screens-to-reflect-the-new-auto-updating-behavior-remove-or-revise-the-existing-messages-are-not-real-time-tap-refresh-notices-using-clear-english",
+      "title": "Update user-facing UX copy in Chats and Chat Thread screens to reflect the new auto-updating behavior (remove or revise the existing “Messages are not real-time. Tap Refresh…” notices) using clear English.",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-react-query-fetcher-hooks-for-call-signaling-and-integrate-them-with-the-call-ui-so-the-app-can-poll-for-offers-answers-candidates-status-while-a-call-modal-is-open",
+      "title": "Add React Query “fetcher” hooks for call signaling and integrate them with the call UI so the app can poll for offers/answers/candidates/status while a call modal is open.",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-whatsapp-style-auto-fetch-polling-is-consistently-applied-to-core-chat-data-wherever-it-is-shown-so-users-do-not-need-to-manually-refresh-to-keep-the-ui-up-to-date",
+      "title": "Ensure WhatsApp-style auto-fetch polling is consistently applied to core chat data wherever it is shown, so users do not need to manually refresh to keep the UI up to date.",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-generate-an-amazing-chat-wallpaper-image-set-as-static-assets-and-commit-them-under-frontend-public-assets-generated-for-use-by-the-ui",
+      "title": "Generate an “amazing” chat wallpaper image set as static assets and commit them under frontend/public/assets/generated/ for use by the UI.",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-the-new-wallpaper-as-the-default-background-for-chat-related-screens-the-chat-list-screen-main-scroll-area-and-the-chat-thread-screen-messages-area-while-preserving-readability-of-message-bubbles-and-content-in-both-light-and-dark-themes",
+      "title": "Apply the new wallpaper as the default background for chat-related screens: the Chat List screen main scroll area and the Chat Thread screen messages area, while preserving readability of message bubbles and content in both light and dark themes.",
+      "reqIds": [
+        "REQ-18"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-an-automatic-sign-in-restore-flow-so-that-when-the-app-loads-and-an-internet-identity-session-delegation-already-exists-in-the-browser-the-user-is-automatically-taken-into-the-app-without-needing-to-click-sign-in-with-internet-identity",
+      "title": "Implement an automatic sign-in restore flow so that when the app loads and an Internet Identity session/delegation already exists in the browser, the user is automatically taken into the app without needing to click “Sign In with Internet Identity”.",
+      "reqIds": [
+        "REQ-19"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-prevent-confusing-auth-screen-ui-flicker-during-initial-authentication-bootstrapping-by-showing-an-explicit-initialization-loading-state-until-the-internet-identity-provider-finishes-determining-whether-a-session-is-already-authenticated",
+      "title": "Prevent confusing Auth-screen UI flicker during initial authentication bootstrapping by showing an explicit initialization/loading state until the Internet Identity provider finishes determining whether a session is already authenticated.",
+      "reqIds": [
+        "REQ-20"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-existing-switch-account-sign-out-flow-continues-to-work-correctly-with-auto-login-signing-out-must-clear-any-locally-stored-last-account-indicators-used-by-the-ui-and-must-not-immediately-auto-redirect-the-user-back-into-chats-unless-they-explicitly-sign-in-again",
+      "title": "Ensure the existing “Switch account” / sign-out flow continues to work correctly with auto-login: signing out must clear any locally-stored “last account” indicators used by the UI and must not immediately auto-redirect the user back into /chats unless they explicitly sign in again.",
+      "reqIds": [
+        "REQ-21"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -102,6 +192,44 @@
       "reqIds": [
         "REQ-8"
       ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Add an in-app option to switch accounts (log out and sign in as a different email)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Add online (real-time) chat so messages update automatically without manual refresh",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Add WhatsApp-like auto-fetch/polling “fetchers” across the app (e.g., chats list, threads/messages, conversation updates, and other relevant data) so content stays up to date without manual refresh",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Add backend query endpoints needed for WhatsApp-style “fetchers” for WebRTC call signaling so the frontend can poll for call state without real-time transport.",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Add an “amazing” chat wallpaper/background theme to the app UI (e.g., default wallpaper applied across chat screens)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-13",
+      "summary": "Add auto-login to the last used account (remember last signed-in user and restore session automatically on app open)",
+      "reqIds": [],
       "status": "pending"
     }
   ],

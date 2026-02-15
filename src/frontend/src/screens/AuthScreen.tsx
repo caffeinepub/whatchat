@@ -1,19 +1,42 @@
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageCircle, Shield, Users, Zap } from 'lucide-react';
+import { MessageCircle, Shield, Users, Zap, Loader2 } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect } from 'react';
+import { shouldSkipAutoLogin, clearSkipAutoLogin } from '../utils/authBootstrap';
 
 export default function AuthScreen() {
-  const { login, identity, isLoggingIn } = useInternetIdentity();
+  const { login, identity, isLoggingIn, isInitializing } = useInternetIdentity();
   const navigate = useNavigate();
 
+  // Auto-navigate to /chats when authenticated (unless skip marker is set)
   useEffect(() => {
-    if (identity) {
-      navigate({ to: '/chats' });
+    if (identity && !isInitializing) {
+      const skipAutoLogin = shouldSkipAutoLogin();
+      if (!skipAutoLogin) {
+        navigate({ to: '/chats' });
+      }
     }
-  }, [identity, navigate]);
+  }, [identity, isInitializing, navigate]);
+
+  const handleLogin = async () => {
+    // Clear skip marker when user explicitly clicks sign-in
+    clearSkipAutoLogin();
+    login();
+  };
+
+  // Show loading state while initializing authentication
+  if (isInitializing) {
+    return (
+      <div className="h-full flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
+          <p className="text-lg text-muted-foreground">Initializing authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full overflow-y-auto bg-gradient-to-br from-primary/5 via-background to-accent/5">
@@ -41,8 +64,15 @@ export default function AuthScreen() {
             <CardDescription>Sign in with Internet Identity to start chatting</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button onClick={login} disabled={isLoggingIn} className="w-full" size="lg">
-              {isLoggingIn ? 'Connecting...' : 'Sign In with Internet Identity'}
+            <Button onClick={handleLogin} disabled={isLoggingIn} className="w-full" size="lg">
+              {isLoggingIn ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                'Sign In with Internet Identity'
+              )}
             </Button>
             <p className="text-xs text-muted-foreground text-center">
               Internet Identity provides secure, anonymous authentication without passwords or personal data.

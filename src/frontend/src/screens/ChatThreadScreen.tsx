@@ -1,10 +1,11 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useGetConversationMessages, useSendMessage, useMarkMessagesAsRead, useSendCallOffer } from '../hooks/useQueries';
+import { useGetConversationMessages, useSendMessage, useMarkMessagesAsRead, useSendCallOffer, useSendCallAnswer, useSendCallCandidate } from '../hooks/useQueries';
+import { usePollingRefetch } from '../hooks/usePollingRefetch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, RefreshCw, Send, Phone, Video } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Send, Phone, Video, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Principal } from '@dfinity/principal';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -15,11 +16,13 @@ import { CallType } from '../hooks/useWebRTCCall';
 export default function ChatThreadScreen() {
   const navigate = useNavigate();
   const { conversationId } = useParams({ from: '/chats/$conversationId' });
-  const { identity } = useInternetIdentity();
+  const { identity, isInitializing } = useInternetIdentity();
   const { data: messages, refetch, isLoading } = useGetConversationMessages(conversationId);
   const sendMessage = useSendMessage();
   const markAsRead = useMarkMessagesAsRead();
   const sendCallOffer = useSendCallOffer();
+  const sendCallAnswer = useSendCallAnswer();
+  const sendCallCandidate = useSendCallCandidate();
   const [messageText, setMessageText] = useState('');
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
   const [activeCallType, setActiveCallType] = useState<CallType>('voice');
@@ -27,10 +30,10 @@ export default function ChatThreadScreen() {
   const myPrincipal = identity?.getPrincipal().toText();
 
   useEffect(() => {
-    if (!identity) {
+    if (!identity && !isInitializing) {
       navigate({ to: '/' });
     }
-  }, [identity, navigate]);
+  }, [identity, isInitializing, navigate]);
 
   useEffect(() => {
     if (conversationId && identity) {
@@ -41,6 +44,21 @@ export default function ChatThreadScreen() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Auto-refresh polling for messages
+  const handlePollingRefetch = useCallback(async () => {
+    await refetch();
+    // Re-mark as read after refresh to keep unread state accurate
+    if (conversationId && identity) {
+      markAsRead.mutate(conversationId);
+    }
+  }, [refetch, conversationId, identity, markAsRead]);
+
+  usePollingRefetch({
+    enabled: !!identity && !!conversationId,
+    interval: 3000,
+    onRefetch: handlePollingRefetch,
+  });
 
   const getRecipientPrincipal = (): Principal | null => {
     if (!conversationId || !myPrincipal) return null;
@@ -117,9 +135,49 @@ export default function ChatThreadScreen() {
     }
   };
 
+  const handleSendAnswer = async (answer: string) => {
+    const recipient = getRecipientPrincipal();
+    if (!recipient) {
+      toast.error('Cannot send answer: Could not determine recipient');
+      return;
+    }
+
+    try {
+      await sendCallAnswer.mutateAsync({ caller: recipient, answer });
+    } catch (error) {
+      console.error('Failed to send answer:', error);
+      toast.error('Failed to answer call');
+    }
+  };
+
+  const handleSendCandidate = async (candidate: string) => {
+    const recipient = getRecipientPrincipal();
+    if (!recipient) {
+      return;
+    }
+
+    try {
+      await sendCallCandidate.mutateAsync({ receiver: recipient, candidate });
+    } catch (error) {
+      console.error('Failed to send ICE candidate:', error);
+    }
+  };
+
   const handleCloseCall = () => {
     setIsCallModalOpen(false);
   };
+
+  // Show loading state while auth is initializing
+  if (isInitializing) {
+    return (
+      <div className="h-full flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
+          <p className="text-lg text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!identity) {
     return null;
@@ -138,69 +196,56 @@ export default function ChatThreadScreen() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h2 className="font-semibold">Chat</h2>
-              <p className="text-xs text-muted-foreground">{conversationId?.slice(0, 16)}...</p>
+              <h2 className="text-lg font-semibold">Chat</h2>
+              <p className="text-xs text-muted-foreground">{conversationId.slice(0, 16)}...</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handleStartCall('voice')}
-              disabled={!recipientPrincipal}
-              title={recipientPrincipal ? 'Start voice call' : 'Cannot determine recipient'}
-            >
-              <Phone className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handleStartCall('video')}
-              disabled={!recipientPrincipal}
-              title={recipientPrincipal ? 'Start video call' : 'Cannot determine recipient'}
-            >
-              <Video className="w-5 h-5" />
-            </Button>
+          <div className="flex gap-2">
             <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isLoading}>
               <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => handleStartCall('voice')}>
+              <Phone className="w-5 h-5" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => handleStartCall('video')}>
+              <Video className="w-5 h-5" />
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Non-realtime notice */}
-      <div className="container mx-auto px-4 pt-2">
-        <Alert variant="default" className="bg-accent/50">
-          <Info className="h-4 w-4" />
-          <AlertDescription className="text-xs">
-            Messages are not real-time. Tap the Refresh button to check for new messages.
-          </AlertDescription>
-        </Alert>
+      {/* Info Alert */}
+      <div className="border-b border-border bg-card">
+        <div className="container mx-auto px-4 py-2">
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription className="text-xs">
+              Messages auto-update while viewing this chat. You can also tap Refresh for an immediate update.
+            </AlertDescription>
+          </Alert>
+        </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="container mx-auto px-4 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto chat-wallpaper">
+        <div className="container mx-auto px-4 py-4 space-y-4 chat-wallpaper-content">
           {isLoading ? (
             <div className="text-center py-12 text-muted-foreground">Loading messages...</div>
           ) : sortedMessages.length > 0 ? (
             sortedMessages.map((msg) => {
               const isMyMessage = msg.sender.toText() === myPrincipal;
               return (
-                <div key={msg.id.toString()} className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}>
+                <div key={msg.id} className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}>
                   <div
-                    className={`max-w-[70%] rounded-2xl px-4 py-2 ${
+                    className={`max-w-[70%] rounded-lg px-4 py-2 ${
                       isMyMessage
-                        ? 'bg-primary text-primary-foreground rounded-br-sm'
-                        : 'bg-muted text-foreground rounded-bl-sm'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-card text-card-foreground border border-border'
                     }`}
                   >
-                    <p className="break-words">{msg.content}</p>
+                    <p className="text-sm break-words">{msg.content}</p>
                     <p className={`text-xs mt-1 ${isMyMessage ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                      {new Date(Number(msg.timestamp) / 1000000).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {new Date(Number(msg.timestamp) / 1000000).toLocaleTimeString()}
                     </p>
                   </div>
                 </div>
@@ -208,15 +253,14 @@ export default function ChatThreadScreen() {
             })
           ) : (
             <div className="text-center py-12 text-muted-foreground">
-              <p>No messages yet</p>
-              <p className="text-sm mt-2">Send a message to start the conversation</p>
+              <p>No messages yet. Start the conversation!</p>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
       </div>
 
-      {/* Message Input */}
+      {/* Input */}
       <div className="border-t border-border bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex gap-2">
@@ -227,7 +271,7 @@ export default function ChatThreadScreen() {
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
               disabled={sendMessage.isPending}
             />
-            <Button onClick={handleSend} disabled={sendMessage.isPending || !messageText.trim()} size="icon">
+            <Button onClick={handleSend} disabled={sendMessage.isPending || !messageText.trim()}>
               <Send className="w-5 h-5" />
             </Button>
           </div>
@@ -243,6 +287,8 @@ export default function ChatThreadScreen() {
           recipientPrincipal={recipientPrincipal}
           isInitiator={true}
           onSendOffer={handleSendOffer}
+          onSendAnswer={handleSendAnswer}
+          onSendCandidate={handleSendCandidate}
         />
       )}
     </div>
